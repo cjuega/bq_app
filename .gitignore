@@ -1,0 +1,11 @@
+# built application files
+*.apk
+*.ap_
+
+# Generated files
+gen/
+bin/
+
+# Eclipse project files
+.classpath
+.project
