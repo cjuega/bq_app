@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -172,9 +173,8 @@ public class SortedListAdapter<T> extends BaseAdapter {
 	}
 	
 	protected void sort(){
-		synchronized (mLock) {
-			Collections.sort(mData, mComparator);	
-		}
+		DataSortTask task = new DataSortTask();
+		task.execute();
 	}
 	
 	protected View createViewFromResource(int position, View convertView, ViewGroup parent, int resource) {
@@ -207,5 +207,16 @@ public class SortedListAdapter<T> extends BaseAdapter {
         	text.setText(item.toString());
 		
 		return view;
+	}
+	
+	class DataSortTask extends AsyncTask<Void, Void, Void>{
+
+		@Override
+		protected Void doInBackground(Void... params) {
+			synchronized (mLock) {
+				Collections.sort(mData, mComparator);	
+			}
+			return null;
+		}
 	}
 }
