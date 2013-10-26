@@ -14,7 +14,9 @@ import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
@@ -114,6 +116,13 @@ public class FileListFragment extends ListFragment implements ActionBar.OnNaviga
 			//mActionBar.setListNavigationCallbacks(null, null);
 		}
 		super.onPause();
+	}
+	
+	
+
+	@Override
+	public void onListItemClick(ListView l, View v, int position, long id) {
+		mCallback.OnFileSelected(mAdapter.getItem(position).path.getName());
 	}
 
 	@Override

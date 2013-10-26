@@ -24,5 +24,6 @@
     <string name="library_book_author">Authors: %1$s</string>
     
     <string name="dropbox_connection_error">Are you connected to dropbox?</string>
+    <string name="dropbox_open_file_error">The file is not available</string>
     
 </resources>
