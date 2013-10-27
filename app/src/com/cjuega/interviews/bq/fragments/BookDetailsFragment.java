@@ -21,7 +21,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class BookDetailsFragment extends Fragment {
+public class BookDetailsFragment extends Fragment implements DropboxManager.SimpleCallback {
 
 	public static final String FILENAME = "FILENAME";
 	
@@ -59,33 +59,54 @@ public class BookDetailsFragment extends Fragment {
 		
 		if (mFilename != null){
 			DbxFile file = DropboxManager.getInstance().open(new DbxPath(mFilename));
-			
-			if (file != null){
-				try {
-					// file.getReadStream() will block the UI thread if the file is not cached!!!
-					Book book = (new EpubReader()).readEpub(file.getReadStream());
-					
-					BitmapHelper helper = new BitmapHelper();
-					helper.loadBitmapFromInputStream(mBookCoverTextView, book.getCoverImage().getInputStream());
-					mBookTitleTextView.setText(String.format(getString(R.string.library_book_title), book.getMetadata().getFirstTitle()));
-					mBookAuthorsTextView.setText(String.format(getString(R.string.library_book_author), book.getMetadata().getAuthors()));
-				} catch (DbxException e){
-					// when file.getReadStream() fails
-					
-				} catch (IOException e) {
-					
-				}
-			} else {
-				Toast.makeText(getActivity(), getString(R.string.dropbox_open_file_error), Toast.LENGTH_SHORT).show();
-			}
+			DropboxManager.getInstance().forceReading(file, this);
 			
 		} else {
 			if (savedInstanceState == null){
-				BitmapHelper helper = new BitmapHelper();
-				//helper.loadBitmapFromResources(mBookCoverTextView, R.id.);
-				mBookTitleTextView.setText(String.format(getString(R.string.library_book_title), "UNKNOWN"));
-				mBookAuthorsTextView.setText(String.format(getString(R.string.library_book_author), "UNKNOWN"));
+				whenBookDataIsNotAvailable();
 			}
+		}
+	}
+
+	private void whenBookDataIsNotAvailable() {
+		BitmapHelper helper = new BitmapHelper();
+		helper.loadBitmapFromResources(mBookCoverTextView, R.drawable.epub_logo);
+		mBookTitleTextView.setText(String.format(getString(R.string.library_book_title), "UNKNOWN"));
+		mBookAuthorsTextView.setText(String.format(getString(R.string.library_book_author), "UNKNOWN"));
+	}
+
+	@Override
+	public void call(Object dbxFile) {
+		if (dbxFile != null && dbxFile instanceof DbxFile){
+
+			DbxFile file = (DbxFile) dbxFile;
+			
+			try {
+				// file.getReadStream() will never block the UI thread because we already guarantee that the files is cached
+				Book book = (new EpubReader()).readEpub(file.getReadStream());
+				file.close();
+				
+				BitmapHelper helper = new BitmapHelper();
+				if (book.getCoverImage() != null)
+					helper.loadBitmapFromInputStream(mBookCoverTextView, book.getCoverImage().getInputStream());
+				else
+					helper.loadBitmapFromResources(mBookCoverTextView, R.drawable.epub_logo);
+					
+				if (book.getMetadata() != null){
+					mBookTitleTextView.setText(String.format(getString(R.string.library_book_title), book.getMetadata().getFirstTitle()));
+					mBookAuthorsTextView.setText(String.format(getString(R.string.library_book_author), book.getMetadata().getAuthors()));
+				}
+					
+			} catch (DbxException e){
+				// when file.getReadStream() fails
+				whenBookDataIsNotAvailable();
+					
+			} catch (IOException e) {
+				whenBookDataIsNotAvailable();
+			}
+		} else {
+			Toast.makeText(getActivity(), getString(R.string.dropbox_open_file_error), Toast.LENGTH_SHORT).show();
+			whenBookDataIsNotAvailable();
 		}
 	}
 }

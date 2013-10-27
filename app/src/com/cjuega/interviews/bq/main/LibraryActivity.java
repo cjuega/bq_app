@@ -6,6 +6,7 @@ import com.cjuega.interviews.bq.fragments.FileListFragment;
 import com.cjuega.interviews.bq.fragments.FileListFragment.OnFileSelectedListener;
 import com.cjuega.interviews.dropbox.DropboxManager;
 import com.dropbox.sync.android.DbxFileInfo;
+import com.dropbox.sync.android.DbxPath;
 
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -59,10 +60,10 @@ public class LibraryActivity extends ActionBarActivity implements OnFileSelected
     }
 
 	@Override
-	public void OnFileSelected(String filename) {
+	public void OnFileSelected(DbxPath path) {
 		
 		Bundle args = new Bundle();
-		args.putString(BookDetailsFragment.FILENAME, filename);
+		args.putString(BookDetailsFragment.FILENAME, path.toString());
 		
 		BookDetailsFragment fragment = new BookDetailsFragment();
 		fragment.setArguments(args);

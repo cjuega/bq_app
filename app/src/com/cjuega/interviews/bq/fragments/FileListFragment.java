@@ -20,7 +20,8 @@ import android.widget.ListView;
 import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
-public class FileListFragment extends ListFragment implements ActionBar.OnNavigationListener {
+public class FileListFragment extends ListFragment implements ActionBar.OnNavigationListener,
+															  DropboxManager.SimpleCallback {
 	
 	private static final String FILE_EXTENSION = ".epub";
 	
@@ -40,7 +41,7 @@ public class FileListFragment extends ListFragment implements ActionBar.OnNaviga
 	
 	// Container Activity must implement this interface
     public interface OnFileSelectedListener {
-        public void OnFileSelected(String filename);
+        public void OnFileSelected(DbxPath path);
     }
 
     @Override
@@ -82,18 +83,8 @@ public class FileListFragment extends ListFragment implements ActionBar.OnNaviga
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 		
-		List<DbxFileInfo> files = DropboxManager.getInstance().getFiles(DbxPath.ROOT, FILE_EXTENSION);
-		
-		if (files == null){
-			Toast.makeText(getActivity(), getString(R.string.dropbox_connection_error), Toast.LENGTH_SHORT).show();
-			
-		}
-		mAdapter = new SortedListAdapter<DbxFileInfo>(getActivity(), 
-													  android.R.layout.simple_list_item_1,
-													  files,
-													  new FilenameComparator());
-		mSortMethod = SORT_BY_FILENAME;
-		setListAdapter(mAdapter);
+		// Async call to get all files
+		DropboxManager.getInstance().getAllFiles(DbxPath.ROOT, FILE_EXTENSION, this);
 	}
 
 	@Override
@@ -118,29 +109,30 @@ public class FileListFragment extends ListFragment implements ActionBar.OnNaviga
 		super.onPause();
 	}
 	
-	
-
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
-		mCallback.OnFileSelected(mAdapter.getItem(position).path.getName());
+		mCallback.OnFileSelected(mAdapter.getItem(position).path);
 	}
 
 	@Override
 	public boolean onNavigationItemSelected(int position, long itemId) {
-		switch (position) {
-		case 0:
-			mAdapter.sortby (new FilenameComparator());
-			mSortMethod = SORT_BY_FILENAME;
-			return true;
-			
-		case 1:
-			mAdapter.sortby (new CreationDateComparator());
-			mSortMethod = SORT_BY_CREATION_DATE;
-			return true;
-
-		default:
-			return false;
+		if (mAdapter != null){
+			switch (position) {
+			case 0:
+				mAdapter.sortby (new FilenameComparator());
+				mSortMethod = SORT_BY_FILENAME;
+				return true;
+				
+			case 1:
+				mAdapter.sortby (new CreationDateComparator());
+				mSortMethod = SORT_BY_CREATION_DATE;
+				return true;
+	
+			default:
+				return false;
+			}
 		}
+		return false;
 	}
 	
 	private class FilenameComparator implements Comparator<DbxFileInfo>{
@@ -156,6 +148,22 @@ public class FileListFragment extends ListFragment implements ActionBar.OnNaviga
 		@Override
 		public int compare(DbxFileInfo lhs, DbxFileInfo rhs) {
 			return lhs.modifiedTime.compareTo(rhs.modifiedTime);
+		}
+	}
+
+	@Override
+	public void call(Object listOfFiles) {
+		if (listOfFiles != null && listOfFiles instanceof List<?>) {
+			List<DbxFileInfo> files = (List<DbxFileInfo>)listOfFiles;
+			
+			mAdapter = new SortedListAdapter<DbxFileInfo>(getActivity(), 
+														  android.R.layout.simple_list_item_1,
+														  files,
+														  new FilenameComparator());
+			mSortMethod = SORT_BY_FILENAME;
+			setListAdapter(mAdapter);
+		} else {
+			Toast.makeText(getActivity(), getString(R.string.dropbox_connection_error), Toast.LENGTH_SHORT).show();
 		}
 	}
 }
