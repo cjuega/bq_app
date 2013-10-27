@@ -32,6 +32,8 @@ public class SortedListAdapter<T> extends BaseAdapter {
 	
 	protected final Object mLock = new Object();
 	
+	private DataSortTask mTaskRef = null;
+	
 	/* Constructors */
 	
 	public SortedListAdapter(Context context, int textViewResourceId, Comparator<? super T> comparator) {
@@ -123,7 +125,6 @@ public class SortedListAdapter<T> extends BaseAdapter {
 				}
 			}
 			sort();
-			notifyDataSetChanged();
 		}
 	}
 	
@@ -135,7 +136,6 @@ public class SortedListAdapter<T> extends BaseAdapter {
 				}
 			}
 			sort();
-			notifyDataSetChanged();
 		}
 	}
 	
@@ -156,7 +156,6 @@ public class SortedListAdapter<T> extends BaseAdapter {
 	public void sortby(Comparator<? super T> comparator){
 		mComparator = comparator;
 		sort();
-		notifyDataSetChanged();
 	}
 	
 	private boolean sortedInsert(T element) {
@@ -164,7 +163,7 @@ public class SortedListAdapter<T> extends BaseAdapter {
 		
 		if (position < 0){
 			synchronized (mLock) {
-				mData.add(Math.abs(position), element);	
+				mData.add(Math.abs(position)-1, element);
 			}
 			return true;
 		}
@@ -173,8 +172,12 @@ public class SortedListAdapter<T> extends BaseAdapter {
 	}
 	
 	protected void sort(){
-		DataSortTask task = new DataSortTask();
-		task.execute();
+		if (mTaskRef != null){
+			mTaskRef.cancel(true);
+		}
+		
+		mTaskRef = new DataSortTask();
+		mTaskRef.execute();
 	}
 	
 	protected View createViewFromResource(int position, View convertView, ViewGroup parent, int resource) {
@@ -210,13 +213,19 @@ public class SortedListAdapter<T> extends BaseAdapter {
 	}
 	
 	class DataSortTask extends AsyncTask<Void, Void, Void>{
-
+		
 		@Override
 		protected Void doInBackground(Void... params) {
 			synchronized (mLock) {
 				Collections.sort(mData, mComparator);	
 			}
 			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Void result) {
+			notifyDataSetChanged();
+			mTaskRef = null;
 		}
 	}
 }

@@ -29,6 +29,13 @@ public class SortedListAdapterTest extends TestCase  {
 		
 		adapter.addAll(numbers);
 		
+		// Wait until a secondary thread sort the elements
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e){
+			
+		}
+		
 		boolean correctOrder = true;
 		
 		for (int i=0; i<adapter.getCount()-1; i++){
@@ -53,6 +60,13 @@ public class SortedListAdapterTest extends TestCase  {
 		
 		for (int i=10; i>0; i--){
 			adapter.add(i);
+		}
+		
+		// Wait until a secondary thread sort the elements
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e){
+			
 		}
 		
 		boolean correctOrder = true;
