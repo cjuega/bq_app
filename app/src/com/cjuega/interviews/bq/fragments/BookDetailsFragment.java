@@ -34,6 +34,8 @@ public class BookDetailsFragment extends Fragment implements DropboxManager.Simp
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
+		setRetainInstance(true);
+		
 		if (savedInstanceState == null){
 			mFilename = getArguments().getString(FILENAME);
 		}
