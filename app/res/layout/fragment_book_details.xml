@@ -6,11 +6,6 @@
 	android:layout_width="match_parent"
 	android:layout_height="match_parent" >
 	
-    <ImageView 
-        android:id="@+id/book_cover"
-	    android:layout_width="wrap_content"
-       	android:layout_height="wrap_content" />
-    
     <TextView 
         android:id="@+id/book_title"
 	    android:layout_width="match_parent"
@@ -20,5 +15,10 @@
         android:id="@+id/book_author"
 	    android:layout_width="match_parent"
        	android:layout_height="wrap_content"/>
+    
+    <ImageView 
+        android:id="@+id/book_cover"
+	    android:layout_width="wrap_content"
+       	android:layout_height="wrap_content" />
         
 </LinearLayout>
