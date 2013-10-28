@@ -1,5 +1,6 @@
 package com.cjuega.interviews.bq.widgets;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
@@ -65,6 +66,24 @@ public class EndlessSortedListAdapter<T> extends SortedListAdapter<T> {
 		mRequester = requester;
 		mLoading = false;
 		mMoreDataToLoad = true;
+		
+		mRequester.requestData();
+	}
+
+	@Override
+	public void addAll(T... items) {
+		if(items.length > 0)
+			super.addAll(items);
+		else
+			mMoreDataToLoad = false;
+	}
+
+	@Override
+	public void addAll(Collection<? extends T> collection) {
+		if (!collection.isEmpty())
+			super.addAll(collection);
+		else
+			mMoreDataToLoad = false;		
 	}
 
 	@Override
@@ -85,6 +104,10 @@ public class EndlessSortedListAdapter<T> extends SortedListAdapter<T> {
 	
 	public void setLoading(boolean loading) {
 		mLoading = loading;
+	}
+	
+	public void setNoMoreDataToLoad() {
+		mMoreDataToLoad = false;
 	}
 
 	private boolean shouldLoadMoreData(List<T> list, int position){
