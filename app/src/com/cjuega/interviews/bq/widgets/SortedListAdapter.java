@@ -13,11 +13,20 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
-/* SortedListAdapter guarantees the data is ALWAYS sorted. As opposite to ArrayAdapter, in which 
- * data can be sorted but then random inserts may occur.*/
+/**
+ * 
+ * @author cjuega
+ *
+ * This class is a simple adapter to show (and maintain) sorted data. SortedListAdapter guarantees 
+ * the data is ALWAYS sorted. As opposite to {@link ArrayAdapter ArrayAdapter}, in which 
+ * data can be sorted but then random inserts may occur.
+ *
+ * @param <T>	The element's type this adapter will hold.
+ */
 
 public class SortedListAdapter<T> extends BaseAdapter {
 

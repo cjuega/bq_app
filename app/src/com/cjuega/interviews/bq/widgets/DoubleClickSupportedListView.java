@@ -8,6 +8,13 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+/**
+ * 
+ * @author cjuega
+ * 
+ * Simple ListView extension that supports double click events in its list items.
+ *
+ */
 public class DoubleClickSupportedListView extends ListView {
 
 	private GestureDetector mDetector;
