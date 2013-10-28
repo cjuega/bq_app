@@ -90,22 +90,41 @@ public class DropboxManager {
 	/**
 	 * 
 	 * This method list all files (up to 1000 files which a Dropbox Sync API limit) of a given {@code extension} 
-	 * that are in the {@code path} folder and all its subdirectories. It is an asynchronous call 
-	 * (implemented by {@link DropboxManager.DropboxListingTask DropboxListingTask}).
+	 * that are in the {@code DbxPath.ROOT} folder and all its subdirectories. See also {@link DropboxManager#getFiles(List, String, int, SimpleCallback) getFiles}
 	 * 
-	 * @param path			List of paths to explore when looking for files.
 	 * @param extension		File extension this method will look for. If it is null then all files are selected.
-	 * @param callback		The callback when the files are already listed. 
+	 * @param callback		The callback when the files are already listed.
 	 */
-	public void getAllFiles(DbxPath path, String extension, SimpleCallback callback){
+	public void getAllFiles(String extension, SimpleCallback callback){
+		ArrayList<DbxPath> pathToRoot = new ArrayList<DbxPath>(1);
+		pathToRoot.add(DbxPath.ROOT);
+		
+		getFiles(pathToRoot, extension, -1, callback);
+	}
+	
+	/**
+	 * 
+	 * This method list all files of a given {@code extension} that are in the folders listed at {@code paths} 
+	 * and "some" of their subdirectories. The method explores the subdirectories tree until {@code maxFiles} are 
+	 * found. Eventually more files than {@code maxFiles} might be returned. That happens when the method 
+	 * reaches the files limit but there are files left in the current directory. After those files are added 
+	 * the method finishes. Use {@code maxFiles} carefully to control the downloaded data rate.
+	 *   
+	 * It is an asynchronous call (implemented by {@link DropboxManager.DropboxListingTask DropboxListingTask}).
+	 * 
+	 * @param paths			List of paths to explore when looking for files.
+	 * @param extension		File extension this method will look for. If it is null then all files are selected.
+	 * @param maxFiles		Relative max number of files to list. Negative values mean there is no limit.
+	 * @param callback		The callback when the files are already listed.
+	 */
+	public void getFiles(List<DbxPath> paths, String extension, int maxFiles, SimpleCallback callback){
 		if (mDbxFs == null)
 			if (!getDropboxFilesystem())
 				return;
 		
-		DropboxListingTask task = new DropboxListingTask(extension, callback);
-		task.execute(path);
+		DropboxListingTask task = new DropboxListingTask(paths, extension, maxFiles, callback);
+		task.execute();
 	}
-	
 	
 	/**
 	 * 
@@ -245,28 +264,27 @@ public class DropboxManager {
 	 * Class that offloads the heavy task of list all files of a given extension to a separate thread.
 	 *
 	 */
-	private class DropboxListingTask extends AsyncTask<DbxPath, Void, List<DbxFileInfo>> {
+	private class DropboxListingTask extends AsyncTask<Void, Void, List<DbxFileInfo>> {
+		List<DbxPath> pathsToExplore;
 		private String fileExtension;
+		int maxFiles;
 		private WeakReference<SimpleCallback> mCallbackRef;
 
-		public DropboxListingTask (String extension, SimpleCallback callback){
+		public DropboxListingTask (List<DbxPath> paths, String extension, int maxfiles, SimpleCallback callback){
+			pathsToExplore = paths;
 			fileExtension = extension;
+			maxFiles = maxfiles;
 			mCallbackRef = new WeakReference<DropboxManager.SimpleCallback>(callback);
 		}
 		
 		@Override
-		protected List<DbxFileInfo> doInBackground(DbxPath... params) {
-			try {
-				List<DbxPath> paths = new ArrayList<DbxPath>();
-				for (int i=0; i<params.length; i++){
-					paths.add(params[i]);
-				}
-				
+		protected List<DbxFileInfo> doInBackground(Void... params) {
+			try {				
 				if (!mDbxFs.hasSynced()){
 					mDbxFs.awaitFirstSync();
 				}
 
-				return iterativeGetFiles(paths, fileExtension);
+				return iterativeGetFiles(pathsToExplore, fileExtension, maxFiles);
 				
 			} catch (DbxException e){
 				// Whenever hasSynced() or awaitFirstSync() fail
@@ -277,16 +295,16 @@ public class DropboxManager {
 		@Override
 		protected void onPostExecute(List<DbxFileInfo> result) {
 			if (result != null && mCallbackRef != null && mCallbackRef.get() != null){
-				mCallbackRef.get().call(result);
+				mCallbackRef.get().call(new DropboxListingBean(pathsToExplore, result));
 			}
 		}
 		
-		private List<DbxFileInfo> iterativeGetFiles(List<DbxPath> paths, String fileExtension){
+		private List<DbxFileInfo> iterativeGetFiles(List<DbxPath> paths, String fileExtension, int maxfiles){
 			ArrayList<DbxFileInfo> filesFound = new ArrayList<DbxFileInfo>();
-			
+			int nfiles = 0;
 			try {
 				// iterates over all the directories
-				while (!paths.isEmpty()){
+				while (!paths.isEmpty() && (maxfiles < 0 || nfiles < maxfiles)){
 					DbxPath path = paths.remove(0);
 					List<DbxFileInfo> files = mDbxFs.listFolder(path);
 					
@@ -296,8 +314,10 @@ public class DropboxManager {
 						if (fileInfo.isFolder)
 							paths.add(fileInfo.path);
 						// if it is the kind of file we are looking for we include it in filesFound
-						else if (fileExtension == null || fileInfo.path.getName().contains(fileExtension))
+						else if (fileExtension == null || fileInfo.path.getName().contains(fileExtension)){
 							filesFound.add(fileInfo);
+							nfiles++;
+						}
 					}
 				}
 			} catch (NotFound e){

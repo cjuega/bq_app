@@ -1,12 +1,15 @@
 package com.cjuega.interviews.bq.fragments;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import com.cjuega.interviews.bq.R;
 import com.cjuega.interviews.bq.widgets.DoubleClickSupportedListView;
 import com.cjuega.interviews.bq.widgets.DoubleClickSupportedListView.OnItemDoubleClickListener;
 import com.cjuega.interviews.bq.widgets.SortedListAdapter;
+import com.cjuega.interviews.dropbox.DropboxListingBean;
 import com.cjuega.interviews.dropbox.DropboxManager;
 import com.dropbox.sync.android.DbxFileInfo;
 import com.dropbox.sync.android.DbxPath;
@@ -32,6 +35,10 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 	private static final String SORT_BY_KEY = "SORT_BY_KEY";
 	private static final int SORT_BY_FILENAME = 1;
 	private static final int SORT_BY_CREATION_DATE = 2;
+	
+	private static final String PATHS_KEY = "PATHS_KEY";
+	private static final String SEPARATOR = "|";
+	private List<DbxPath> mPathsToExplore;
 	
 	private int mSortMethod;
 	
@@ -70,9 +77,12 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 															   R.array.action_sortby_list,
 															   android.R.layout.simple_list_item_1);
 			mSortMethod = SORT_BY_FILENAME;
+			mPathsToExplore = new ArrayList<DbxPath>();
+			mPathsToExplore.add(DbxPath.ROOT);
 			
 		}else{
 			mSortMethod = savedInstanceState.getInt(SORT_BY_KEY);
+			mPathsToExplore = restorePathsListFromString(savedInstanceState.getString(PATHS_KEY));
 		}
 		
 		if (getActivity() instanceof ActionBarActivity){
@@ -115,7 +125,7 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 		
 		// Async call to get all files
 		setListShown(false);
-		DropboxManager.getInstance().getAllFiles(DbxPath.ROOT, FILE_EXTENSION, this);
+		DropboxManager.getInstance().getAllFiles(FILE_EXTENSION, this);
 	}
 
 	@Override
@@ -129,6 +139,7 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 		outState.putInt(SORT_BY_KEY, mSortMethod);
+		outState.putString(PATHS_KEY, convertPathsListToString(mPathsToExplore));
 	}
 
 	@Override
@@ -161,6 +172,34 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 		return false;
 	}
 	
+	private String convertPathsListToString (List<DbxPath> paths){
+		if (paths == null || paths.size() == 0)
+			return null;
+		
+		StringBuilder pathListString = new StringBuilder();
+        
+        for(DbxPath i : paths){
+        	pathListString.append(i);
+        	pathListString.append(SEPARATOR);
+        }
+        
+        return pathListString.toString();
+	}
+	
+	private List<DbxPath> restorePathsListFromString (String str){
+		List<DbxPath> paths = new ArrayList<DbxPath>();
+		
+		if (str != null){
+			StringTokenizer tk = new StringTokenizer(str, SEPARATOR);
+   	 		
+   	 		while (tk.hasMoreElements()){
+   	 		paths.add(new DbxPath(tk.nextToken()));
+   	 		}
+		}
+		
+		return paths;
+	}
+	
 	private Comparator<DbxFileInfo> restoreComparator(int comparatorId) {
 		switch (comparatorId) {
 		case SORT_BY_FILENAME:
@@ -191,9 +230,10 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 	}
 
 	@Override
-	public void call(Object listOfFiles) {
-		if (listOfFiles != null && listOfFiles instanceof List<?>) {
-			List<DbxFileInfo> files = (List<DbxFileInfo>)listOfFiles;
+	public void call(Object listOfPathsAndFiles) {
+		if (listOfPathsAndFiles != null && listOfPathsAndFiles instanceof DropboxListingBean) {
+			mPathsToExplore = ((DropboxListingBean)listOfPathsAndFiles).getPaths();
+			List<DbxFileInfo> files = ((DropboxListingBean)listOfPathsAndFiles).getFiles();
 			
 			mAdapter = new SortedListAdapter<DbxFileInfo>(getActivity(), 
 														  android.R.layout.simple_list_item_1,
