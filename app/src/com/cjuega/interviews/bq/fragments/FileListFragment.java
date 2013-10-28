@@ -13,7 +13,6 @@ import com.dropbox.sync.android.DbxPath;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.v4.app.ListFragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
@@ -25,8 +24,8 @@ import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class FileListFragment extends ListFragment implements ActionBar.OnNavigationListener,
-															  DropboxManager.SimpleCallback {
+public class FileListFragment extends ListFragmentCustomLayout implements ActionBar.OnNavigationListener,
+															  		 	  DropboxManager.SimpleCallback {
 	
 	private static final String FILE_EXTENSION = ".epub";
 	
@@ -92,7 +91,7 @@ public class FileListFragment extends ListFragment implements ActionBar.OnNaviga
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		
-		View view = inflater.inflate(R.layout.fragment_file_list, container, false);
+		View view = super.onCreateView(inflater, container, savedInstanceState);
 		
 		DoubleClickSupportedListView listView = (DoubleClickSupportedListView) view.findViewById(android.R.id.list);
 		listView.setOnItemDoubleClickListener(new OnItemDoubleClickListener() {
@@ -115,6 +114,7 @@ public class FileListFragment extends ListFragment implements ActionBar.OnNaviga
 		super.onActivityCreated(savedInstanceState);
 		
 		// Async call to get all files
+		setListShown(false);
 		DropboxManager.getInstance().getAllFiles(DbxPath.ROOT, FILE_EXTENSION, this);
 	}
 
@@ -199,6 +199,7 @@ public class FileListFragment extends ListFragment implements ActionBar.OnNaviga
 														  android.R.layout.simple_list_item_1,
 														  files,
 														  restoreComparator(mSortMethod));
+			setListShown(true);
 			setListAdapter(mAdapter);
 		} else {
 			Toast.makeText(getActivity(), getString(R.string.dropbox_connection_error), Toast.LENGTH_SHORT).show();
