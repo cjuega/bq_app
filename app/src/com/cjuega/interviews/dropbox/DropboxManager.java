@@ -326,7 +326,9 @@ public class DropboxManager {
 						else if (fileExtension == null || fileInfo.path.getName().contains(fileExtension)){
 							DbxEPubInfo newItem = new DbxEPubInfo(fileInfo);
 							newItem.setEPubBookName(titleWhenError);
-							/*
+							
+							// TODO EPubHelper.openBookFromFile(file) takes too long. We should move it to another
+							//      thread and use some kind of listener to know when the file is open.
 							DbxFile file = DropboxManager.getInstance().open(fileInfo.path);
 							if (DropboxManager.getInstance().isSync(file)){
 								Book book = EPubHelper.openBookFromFile(file);
@@ -334,7 +336,7 @@ public class DropboxManager {
 									newItem.setEPubBookName(book.getMetadata().getFirstTitle());
 							} else {
 								file.close();
-							}*/
+							}
 								
 							filesFound.add(newItem);
 							nfiles++;
