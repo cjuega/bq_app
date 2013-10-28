@@ -6,9 +6,10 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import com.cjuega.interviews.bq.R;
+import com.cjuega.interviews.bq.widgets.DataRequester;
 import com.cjuega.interviews.bq.widgets.DoubleClickSupportedListView;
 import com.cjuega.interviews.bq.widgets.DoubleClickSupportedListView.OnItemDoubleClickListener;
-import com.cjuega.interviews.bq.widgets.SortedListAdapter;
+import com.cjuega.interviews.bq.widgets.EndlessSortedListAdapter;
 import com.cjuega.interviews.dropbox.DropboxListingBean;
 import com.cjuega.interviews.dropbox.DropboxManager;
 import com.dropbox.sync.android.DbxFileInfo;
@@ -28,7 +29,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class FileListFragment extends ListFragmentCustomLayout implements ActionBar.OnNavigationListener,
-															  		 	  DropboxManager.SimpleCallback {
+															  		 	  DropboxManager.SimpleCallback,
+															  		 	  DataRequester {
 	
 	private static final String FILE_EXTENSION = ".epub";
 	
@@ -40,6 +42,8 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 	private static final String SEPARATOR = "|";
 	private List<DbxPath> mPathsToExplore;
 	
+	private static final int MAX_FILES_PER_REQUEST = 20;
+	
 	private int mSortMethod;
 	
 	private OnFileSelectedListener mCallback;
@@ -47,7 +51,7 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 	
 	private int mPreviousNavigationMode;
 	
-	private SortedListAdapter<DbxFileInfo> mAdapter;
+	private EndlessSortedListAdapter<DbxFileInfo> mAdapter;
 	
 	// Container Activity must implement this interface
     public interface OnFileSelectedListener {
@@ -123,9 +127,13 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 		
-		// Async call to get all files
 		setListShown(false);
-		DropboxManager.getInstance().getAllFiles(FILE_EXTENSION, this);
+		
+		mAdapter = new EndlessSortedListAdapter<DbxFileInfo>(getActivity(), 
+															 android.R.layout.simple_list_item_1, 
+															 restoreComparator(mSortMethod), 
+															 this);
+		setListAdapter(mAdapter);
 	}
 
 	@Override
@@ -235,14 +243,28 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 			mPathsToExplore = ((DropboxListingBean)listOfPathsAndFiles).getPaths();
 			List<DbxFileInfo> files = ((DropboxListingBean)listOfPathsAndFiles).getFiles();
 			
-			mAdapter = new SortedListAdapter<DbxFileInfo>(getActivity(), 
-														  android.R.layout.simple_list_item_1,
-														  files,
-														  restoreComparator(mSortMethod));
+			mAdapter.addAll(files);
+			
+			/* Probably faster than mAdapter.addAll(files) because elements are inserted in the correct position 
+			 * and it does not require to sort again
+			for (DbxFileInfo dbxFileInfo : files) {
+				mAdapter.add(dbxFileInfo);
+			}
+			mAdapter.setNoMoreDataToLoad();
+			*/
+			
+			mAdapter.setLoading(false);
+			getLoadingFooterView().setVisibility(View.GONE);
 			setListShown(true);
-			setListAdapter(mAdapter);
+			
 		} else {
 			Toast.makeText(getActivity(), getString(R.string.dropbox_connection_error), Toast.LENGTH_SHORT).show();
 		}
+	}
+
+	@Override
+	public void requestData() {
+		getLoadingFooterView().setVisibility(View.VISIBLE);
+		DropboxManager.getInstance().getFiles(mPathsToExplore, FILE_EXTENSION, MAX_FILES_PER_REQUEST, this);
 	}
 }
