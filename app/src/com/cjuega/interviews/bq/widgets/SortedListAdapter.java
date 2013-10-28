@@ -225,8 +225,10 @@ public class SortedListAdapter<T> extends BaseAdapter {
 		
 		@Override
 		protected Void doInBackground(Void... params) {
-			synchronized (mLock) {
-				Collections.sort(mData, mComparator);	
+			if (mData != null && mComparator != null){
+				synchronized (mLock) {
+					Collections.sort(mData, mComparator);	
+				}
 			}
 			return null;
 		}
