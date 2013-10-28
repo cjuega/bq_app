@@ -3,12 +3,11 @@ package com.cjuega.interviews.bq.fragments;
 import java.io.IOException;
 
 import nl.siegmann.epublib.domain.Book;
-import nl.siegmann.epublib.epub.EpubReader;
 
 import com.cjuega.interviews.bq.R;
 import com.cjuega.interviews.bq.utils.BitmapHelper;
 import com.cjuega.interviews.dropbox.DropboxManager;
-import com.dropbox.sync.android.DbxException;
+import com.cjuega.interviews.epub.EPubHelper;
 import com.dropbox.sync.android.DbxFile;
 import com.dropbox.sync.android.DbxPath;
 
@@ -78,30 +77,26 @@ public class BookDetailsFragment extends Fragment implements DropboxManager.Simp
 	@Override
 	public void call(Object dbxFile) {
 		if (dbxFile != null && dbxFile instanceof DbxFile){
-
-			DbxFile file = (DbxFile) dbxFile;
-			
-			try {
-				// file.getReadStream() will never block the UI thread because we already guarantee that the files is cached
-				Book book = (new EpubReader()).readEpub(file.getReadStream());
-				file.close();
+			// file.getReadStream() will never block the UI thread because we already guarantee that the files is cached
+			Book book = EPubHelper.openBookFromFile((DbxFile) dbxFile);
+				
+			if (book != null) {
 				
 				BitmapHelper helper = new BitmapHelper();
 				if (book.getCoverImage() != null)
-					helper.loadBitmapFromInputStream(mBookCoverTextView, book.getCoverImage().getInputStream());
+					try {
+						helper.loadBitmapFromInputStream(mBookCoverTextView, book.getCoverImage().getInputStream());
+					} catch (IOException e) {
+						helper.loadBitmapFromResources(mBookCoverTextView, R.drawable.epub_logo);
+					}
 				else
 					helper.loadBitmapFromResources(mBookCoverTextView, R.drawable.epub_logo);
-					
+						
 				if (book.getMetadata() != null){
 					mBookTitleTextView.setText(String.format(getString(R.string.library_book_title), book.getMetadata().getFirstTitle()));
 					mBookAuthorsTextView.setText(String.format(getString(R.string.library_book_author), book.getMetadata().getAuthors()));
 				}
-					
-			} catch (DbxException e){
-				// when file.getReadStream() fails
-				whenBookDataIsNotAvailable();
-					
-			} catch (IOException e) {
+			} else {
 				whenBookDataIsNotAvailable();
 			}
 		} else {
