@@ -9,7 +9,7 @@ import com.cjuega.interviews.bq.R;
 import com.cjuega.interviews.bq.widgets.DataRequester;
 import com.cjuega.interviews.bq.widgets.DoubleClickSupportedListView;
 import com.cjuega.interviews.bq.widgets.DoubleClickSupportedListView.OnItemDoubleClickListener;
-import com.cjuega.interviews.bq.widgets.EndlessSortedListAdapter;
+import com.cjuega.interviews.bq.widgets.DropboxFileAdapter;
 import com.cjuega.interviews.dropbox.DropboxListingBean;
 import com.cjuega.interviews.dropbox.DropboxManager;
 import com.dropbox.sync.android.DbxFileInfo;
@@ -51,7 +51,7 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 	
 	private int mPreviousNavigationMode;
 	
-	private EndlessSortedListAdapter<DbxFileInfo> mAdapter;
+	private DropboxFileAdapter mAdapter;
 	
 	// Container Activity must implement this interface
     public interface OnFileSelectedListener {
@@ -88,7 +88,7 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 			mSortMethod = savedInstanceState.getInt(SORT_BY_KEY);
 			mPathsToExplore = restorePathsListFromString(savedInstanceState.getString(PATHS_KEY));
 		}
-		
+				
 		if (getActivity() instanceof ActionBarActivity){
 			mActionBar = ((ActionBarActivity)getActivity()).getSupportActionBar();
 			mPreviousNavigationMode = mActionBar.getNavigationMode();
@@ -127,13 +127,11 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 		
-		setListShown(false);
-		
-		mAdapter = new EndlessSortedListAdapter<DbxFileInfo>(getActivity(), 
-															 android.R.layout.simple_list_item_1, 
-															 restoreComparator(mSortMethod), 
-															 this);
-		setListAdapter(mAdapter);
+		if (mAdapter == null){
+			setListShown(false);
+			mAdapter = new DropboxFileAdapter(getActivity(), restoreComparator(mSortMethod), this);
+			setListAdapter(mAdapter);
+		}
 	}
 
 	@Override
