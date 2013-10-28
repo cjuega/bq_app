@@ -35,7 +35,9 @@ public class DoubleClickSupportedListView extends ListView {
 	
 	@Override
 	public boolean onTouchEvent(MotionEvent ev) {
-		return mDetector.onTouchEvent(ev);
+		if (!mDetector.onTouchEvent(ev))
+			return super.onTouchEvent(ev);
+		return true;
 	}
 
 	public void setOnItemDoubleClickListener(OnItemDoubleClickListener listener){
@@ -56,7 +58,9 @@ public class DoubleClickSupportedListView extends ListView {
 		@Override
 		public boolean onDoubleTap(MotionEvent e) {
 			if (mDoubleClickListener != null){
+				
 				int position = DoubleClickSupportedListView.this.pointToPosition((int)e.getX(), (int)e.getY());
+				
 				if (position != INVALID_POSITION){
 					mDoubleClickListener.OnItemDoubleClick(DoubleClickSupportedListView.this,
 														   DoubleClickSupportedListView.this.getChildAt(position),

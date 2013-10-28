@@ -4,6 +4,8 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.cjuega.interviews.bq.R;
+import com.cjuega.interviews.bq.widgets.DoubleClickSupportedListView;
+import com.cjuega.interviews.bq.widgets.DoubleClickSupportedListView.OnItemDoubleClickListener;
 import com.cjuega.interviews.bq.widgets.SortedListAdapter;
 import com.cjuega.interviews.dropbox.DropboxManager;
 import com.dropbox.sync.android.DbxFileInfo;
@@ -14,10 +16,13 @@ import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ListView;
 import android.widget.SpinnerAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class FileListFragment extends ListFragment implements ActionBar.OnNavigationListener,
@@ -84,6 +89,28 @@ public class FileListFragment extends ListFragment implements ActionBar.OnNaviga
 	}
 
 	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
+		
+		View view = inflater.inflate(R.layout.fragment_file_list, container, false);
+		
+		DoubleClickSupportedListView listView = (DoubleClickSupportedListView) view.findViewById(android.R.id.list);
+		listView.setOnItemDoubleClickListener(new OnItemDoubleClickListener() {
+			
+			@Override
+			public void OnItemDoubleClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				mCallback.OnFileSelected(mAdapter.getItem(position).path);
+			}
+		});
+		
+		TextView emptyText = (TextView) view.findViewById(android.R.id.empty);
+		emptyText.setText(R.string.library_empty_list);
+
+		return view;
+	}
+
+	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 		
@@ -111,11 +138,6 @@ public class FileListFragment extends ListFragment implements ActionBar.OnNaviga
 			//mActionBar.setListNavigationCallbacks(null, null);
 		}
 		super.onPause();
-	}
-	
-	@Override
-	public void onListItemClick(ListView l, View v, int position, long id) {
-		mCallback.OnFileSelected(mAdapter.getItem(position).path);
 	}
 
 	@Override
