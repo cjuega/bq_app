@@ -35,7 +35,6 @@ public class FileListFragment extends ListFragment implements ActionBar.OnNaviga
 	private ActionBar mActionBar;
 	
 	private int mPreviousNavigationMode;
-	private SpinnerAdapter mDropDownAdapter;
 	
 	private SortedListAdapter<DbxFileInfo> mAdapter;
 	
@@ -59,11 +58,15 @@ public class FileListFragment extends ListFragment implements ActionBar.OnNaviga
     }
     
 	@Override
-	public void onCreate(Bundle savedInstanceState) {		
+	public void onCreate(Bundle savedInstanceState) {
+		SpinnerAdapter dropDownAdapter = null;
+		
 		if (savedInstanceState == null){
-			mDropDownAdapter = ArrayAdapter.createFromResource(getActivity(), 
+			dropDownAdapter = ArrayAdapter.createFromResource(getActivity(), 
 															   R.array.action_sortby_list,
 															   android.R.layout.simple_list_item_1);
+			mSortMethod = SORT_BY_FILENAME;
+			
 		}else{
 			mSortMethod = savedInstanceState.getInt(SORT_BY_KEY);
 		}
@@ -72,7 +75,8 @@ public class FileListFragment extends ListFragment implements ActionBar.OnNaviga
 			mActionBar = ((ActionBarActivity)getActivity()).getSupportActionBar();
 			mPreviousNavigationMode = mActionBar.getNavigationMode();
 			// To enable the drop-down menu within the Activity's ActionBar
-			mActionBar.setListNavigationCallbacks(mDropDownAdapter, this);
+			if (dropDownAdapter != null)
+				mActionBar.setListNavigationCallbacks(dropDownAdapter, this);
 		}else
 			mActionBar = null;
 		
@@ -135,6 +139,19 @@ public class FileListFragment extends ListFragment implements ActionBar.OnNaviga
 		return false;
 	}
 	
+	private Comparator<DbxFileInfo> restoreComparator(int comparatorId) {
+		switch (comparatorId) {
+		case SORT_BY_FILENAME:
+			return new FilenameComparator();
+			
+		case SORT_BY_CREATION_DATE:
+			return new CreationDateComparator();
+
+		default:
+			return null;
+		}
+	}
+	
 	private class FilenameComparator implements Comparator<DbxFileInfo>{
 
 		@Override
@@ -159,8 +176,7 @@ public class FileListFragment extends ListFragment implements ActionBar.OnNaviga
 			mAdapter = new SortedListAdapter<DbxFileInfo>(getActivity(), 
 														  android.R.layout.simple_list_item_1,
 														  files,
-														  new FilenameComparator());
-			mSortMethod = SORT_BY_FILENAME;
+														  restoreComparator(mSortMethod));
 			setListAdapter(mAdapter);
 		} else {
 			Toast.makeText(getActivity(), getString(R.string.dropbox_connection_error), Toast.LENGTH_SHORT).show();
