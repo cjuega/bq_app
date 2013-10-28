@@ -6,16 +6,20 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import com.cjuega.interviews.bq.R;
+import com.cjuega.interviews.bq.utils.Utils;
 import com.cjuega.interviews.bq.widgets.DataRequester;
 import com.cjuega.interviews.bq.widgets.DoubleClickSupportedListView;
 import com.cjuega.interviews.bq.widgets.DoubleClickSupportedListView.OnItemDoubleClickListener;
 import com.cjuega.interviews.bq.widgets.DropboxFileAdapter;
+import com.cjuega.interviews.dropbox.DbxEPubInfo;
 import com.cjuega.interviews.dropbox.DropboxListingBean;
 import com.cjuega.interviews.dropbox.DropboxManager;
-import com.dropbox.sync.android.DbxFileInfo;
 import com.dropbox.sync.android.DbxPath;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
@@ -35,8 +39,9 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 	private static final String FILE_EXTENSION = ".epub";
 	
 	private static final String SORT_BY_KEY = "SORT_BY_KEY";
-	private static final int SORT_BY_FILENAME = 1;
-	private static final int SORT_BY_CREATION_DATE = 2;
+	private static final int SORT_BY_BOOKTITLE = 1;
+	private static final int SORT_BY_FILENAME = 2;
+	private static final int SORT_BY_CREATION_DATE = 3;
 	
 	private static final String PATHS_KEY = "PATHS_KEY";
 	private static final String SEPARATOR = "|";
@@ -52,6 +57,10 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 	private int mPreviousNavigationMode;
 	
 	private DropboxFileAdapter mAdapter;
+	
+	private static final String SHOW_DIALOG_KEY = "SHOW_DIALOG_KEY";
+	private long mShowingDialogBytes = 0;
+	private AlertDialog mSyncDialog;
 	
 	// Container Activity must implement this interface
     public interface OnFileSelectedListener {
@@ -74,29 +83,21 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
     
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		SpinnerAdapter dropDownAdapter = null;
 		
 		if (savedInstanceState == null){
-			dropDownAdapter = ArrayAdapter.createFromResource(getActivity(), 
-															   R.array.action_sortby_list,
-															   android.R.layout.simple_list_item_1);
 			mSortMethod = SORT_BY_FILENAME;
 			mPathsToExplore = new ArrayList<DbxPath>();
 			mPathsToExplore.add(DbxPath.ROOT);
 			
 		}else{
 			mSortMethod = savedInstanceState.getInt(SORT_BY_KEY);
+			if (mSortMethod == 0)
+				mSortMethod = SORT_BY_FILENAME;	
 			mPathsToExplore = restorePathsListFromString(savedInstanceState.getString(PATHS_KEY));
+			mShowingDialogBytes = savedInstanceState.getLong(SHOW_DIALOG_KEY);
+			showSyncDialog(mShowingDialogBytes);
 		}
-				
-		if (getActivity() instanceof ActionBarActivity){
-			mActionBar = ((ActionBarActivity)getActivity()).getSupportActionBar();
-			mPreviousNavigationMode = mActionBar.getNavigationMode();
-			// To enable the drop-down menu within the Activity's ActionBar
-			if (dropDownAdapter != null)
-				mActionBar.setListNavigationCallbacks(dropDownAdapter, this);
-		}else
-			mActionBar = null;
+
 		
 		super.onCreate(savedInstanceState);
 	}
@@ -113,7 +114,7 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 			@Override
 			public void OnItemDoubleClick(AdapterView<?> parent, View view,
 					int position, long id) {
-				mCallback.OnFileSelected(mAdapter.getItem(position).path);
+				mCallback.OnFileSelected(mAdapter.getItem(position).getFileInfo().path);
 			}
 		});
 		
@@ -126,6 +127,19 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
+											
+		if (getActivity() instanceof ActionBarActivity){
+			mActionBar = ((ActionBarActivity)getActivity()).getSupportActionBar();
+			if (mActionBar != null)
+				mPreviousNavigationMode = mActionBar.getNavigationMode();
+			
+			SpinnerAdapter dropDownAdapter = ArrayAdapter.createFromResource(getActivity(), 
+					   														 R.array.action_sortby_list,
+					   														 android.R.layout.simple_list_item_1);
+			// To enable the drop-down menu within the Activity's ActionBar
+			mActionBar.setListNavigationCallbacks(dropDownAdapter, this);
+		}else
+			mActionBar = null;
 		
 		if (mAdapter == null){
 			setListShown(false);
@@ -146,6 +160,7 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 		super.onSaveInstanceState(outState);
 		outState.putInt(SORT_BY_KEY, mSortMethod);
 		outState.putString(PATHS_KEY, convertPathsListToString(mPathsToExplore));
+		outState.putLong(SHOW_DIALOG_KEY, mShowingDialogBytes);
 	}
 
 	@Override
@@ -154,6 +169,10 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 			mActionBar.setNavigationMode(mPreviousNavigationMode);
 			//mActionBar.setListNavigationCallbacks(null, null);
 		}
+		
+		if (mSyncDialog != null)
+			mSyncDialog.dismiss();
+		
 		super.onPause();
 	}
 
@@ -161,21 +180,64 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 	public boolean onNavigationItemSelected(int position, long itemId) {
 		if (mAdapter != null){
 			switch (position) {
+			//Sort by filename
 			case 0:
 				mAdapter.sortby (new FilenameComparator());
 				mSortMethod = SORT_BY_FILENAME;
 				return true;
 				
+			//Sort by creation date
 			case 1:
 				mAdapter.sortby (new CreationDateComparator());
 				mSortMethod = SORT_BY_CREATION_DATE;
 				return true;
-	
+				
+			//Sort by book's title
+			case 2:
+				long bytesToDownload = mAdapter.isSync();
+				if (bytesToDownload == 0){
+					mAdapter.sortby (new BookTitleComparator());
+					mSortMethod = SORT_BY_BOOKTITLE;
+					
+				} else {
+					showSyncDialog(bytesToDownload);
+				}
+				return true;
+				
 			default:
 				return false;
 			}
 		}
 		return false;
+	}
+	
+	private void showSyncDialog(long bytes){
+		if (bytes <= 0)
+			return;
+		
+		mShowingDialogBytes = bytes;
+		
+		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+		
+		mSyncDialog = builder.setTitle(R.string.dialog_title)
+							 .setMessage(String.format(getString(R.string.dialog_message), Utils.humanReadableByteCount(bytes, false)))
+							 .setPositiveButton(R.string.dialog_yes, new OnClickListener() {
+								 @Override
+								 public void onClick(DialogInterface dialog, int which) {
+									 mShowingDialogBytes = 0;
+									 mAdapter.syncAllFiles();
+									 mSyncDialog.dismiss();
+								 }
+							 }).setNegativeButton(R.string.dialog_no, new OnClickListener() {
+								
+								 @Override
+								 public void onClick(DialogInterface dialog, int which) {
+									 mShowingDialogBytes = 0;
+									 mSyncDialog.dismiss();
+								 }
+							 }).create();
+		
+		mSyncDialog.show();
 	}
 	
 	private String convertPathsListToString (List<DbxPath> paths){
@@ -201,13 +263,18 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
    	 		while (tk.hasMoreElements()){
    	 		paths.add(new DbxPath(tk.nextToken()));
    	 		}
+		} else {
+			paths.add(DbxPath.ROOT);
 		}
 		
 		return paths;
 	}
 	
-	private Comparator<DbxFileInfo> restoreComparator(int comparatorId) {
+	private Comparator<DbxEPubInfo> restoreComparator(int comparatorId) {
 		switch (comparatorId) {
+		case SORT_BY_BOOKTITLE:
+			return new BookTitleComparator();
+			
 		case SORT_BY_FILENAME:
 			return new FilenameComparator();
 			
@@ -219,19 +286,27 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 		}
 	}
 	
-	private class FilenameComparator implements Comparator<DbxFileInfo>{
+	private class BookTitleComparator implements Comparator<DbxEPubInfo>{
 
 		@Override
-		public int compare(DbxFileInfo lhs, DbxFileInfo rhs) {
-			return lhs.path.getName().compareTo(rhs.path.getName());
+		public int compare(DbxEPubInfo lhs, DbxEPubInfo rhs) {
+			return lhs.getEPubBookName().compareTo(rhs.getEPubBookName());
 		}
 	}
 	
-	private class CreationDateComparator implements Comparator<DbxFileInfo>{
+	private class FilenameComparator implements Comparator<DbxEPubInfo>{
 
 		@Override
-		public int compare(DbxFileInfo lhs, DbxFileInfo rhs) {
-			return lhs.modifiedTime.compareTo(rhs.modifiedTime);
+		public int compare(DbxEPubInfo lhs, DbxEPubInfo rhs) {
+			return lhs.getFileInfo().path.getName().compareTo(rhs.getFileInfo().path.getName());
+		}
+	}
+	
+	private class CreationDateComparator implements Comparator<DbxEPubInfo>{
+
+		@Override
+		public int compare(DbxEPubInfo lhs, DbxEPubInfo rhs) {
+			return lhs.getFileInfo().modifiedTime.compareTo(rhs.getFileInfo().modifiedTime);
 		}
 	}
 
@@ -239,7 +314,7 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 	public void call(Object listOfPathsAndFiles) {
 		if (listOfPathsAndFiles != null && listOfPathsAndFiles instanceof DropboxListingBean) {
 			mPathsToExplore = ((DropboxListingBean)listOfPathsAndFiles).getPaths();
-			List<DbxFileInfo> files = ((DropboxListingBean)listOfPathsAndFiles).getFiles();
+			List<DbxEPubInfo> files = ((DropboxListingBean)listOfPathsAndFiles).getFiles();
 			
 			mAdapter.addAll(files);
 			
