@@ -60,7 +60,8 @@ public class DropboxFileAdapter extends EndlessSortedListAdapter<DbxFileInfo>{
 		
 		DbxFileInfo fileInfo = getItem(position);
 		
-		dropboxFileHolder.logo.setImageResource(R.drawable.ic_epub);
+		// The logo is already set in the xml. We could here use a dynamic icon.
+		//dropboxFileHolder.logo.setImageResource(R.drawable.ic_epub);
 		dropboxFileHolder.title.setText(R.string.library_book_title_no_sync);
 		dropboxFileHolder.filename.setText(fileInfo.path.getName());
 		dropboxFileHolder.size.setText(Utils.humanReadableByteCount(fileInfo.size, false));
