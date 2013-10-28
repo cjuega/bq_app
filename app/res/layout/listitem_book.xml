@@ -11,17 +11,18 @@
        	android:layout_height="wrap_content"
        	android:src="@drawable/ic_epub"
        	android:layout_alignParentLeft="true"
-       	android:layout_toLeftOf="@+id/list_item_book_title"/>
+       	android:paddingRight="12dp"/>
     
     <TextView 
-        android:id="@id/list_item_book_title"
-	    android:layout_width="wrap_content"
+        android:id="@+id/list_item_book_title"
+	    android:layout_width="match_parent"
        	android:layout_height="wrap_content"
+       	android:layout_toRightOf="@id/list_item_book_thumbtail"
        	android:layout_toLeftOf="@+id/list_item_book_filesize"/>
     
     <TextView 
         android:id="@+id/list_item_filename"
-	    android:layout_width="wrap_content"
+	    android:layout_width="match_parent"
        	android:layout_height="wrap_content"
        	android:layout_toRightOf="@id/list_item_book_thumbtail"
        	android:layout_toLeftOf="@id/list_item_book_filesize"
