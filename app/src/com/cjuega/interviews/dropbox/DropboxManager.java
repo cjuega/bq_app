@@ -24,6 +24,8 @@ import com.dropbox.sync.android.DbxFile.Listener;
 import com.dropbox.sync.android.DbxFileInfo;
 import com.dropbox.sync.android.DbxFileStatus;
 import com.dropbox.sync.android.DbxFileSystem;
+import com.dropbox.sync.android.DbxFileSystem.PathListener;
+import com.dropbox.sync.android.DbxFileSystem.PathListener.Mode;
 import com.dropbox.sync.android.DbxPath;
 import com.dropbox.sync.android.DbxException.Unauthorized;
 
@@ -42,12 +44,16 @@ public class DropboxManager {
 	
 	private DbxAccountManager mDbxAcctMgr;
 	private DbxFileSystem mDbxFs;
+	
+	private List<PathListener> mPathListeners;
 		
 	private DropboxManager(){
 		Context context = DropboxLibraryApplication.getAppContext();
 		mDbxAcctMgr = DbxAccountManager.getInstance(context, 
 												    context.getString(R.string.dropbox_app_key), 
 												    context.getString(R.string.dropbox_secret_key));
+		
+		mPathListeners = new ArrayList<PathListener>();
 		
 		getDropboxFilesystem();
 	}
@@ -76,8 +82,27 @@ public class DropboxManager {
 	 * 
 	 */
 	public void dropboxLogout(){
+		dropboxShutdown();
 		if (mDbxAcctMgr.hasLinkedAccount())
 			mDbxAcctMgr.unlink();
+	}
+	
+	/**
+	 * 
+	 * This method prepares the Dropbox sync API for shutdown. It removes all {@link PathListener PathListeners} (if any).
+	 * 
+	 */
+	public void dropboxShutdown(){
+		if (mDbxFs != null){
+			if (mPathListeners != null && mPathListeners.size() > 0){
+				for (PathListener listener : mPathListeners) {
+					mDbxFs.removePathListenerForAll(listener);	
+				}
+				mPathListeners.clear();
+			}
+			
+			mDbxFs.shutDown();
+		}
 	}
 	
 	/**
@@ -88,6 +113,22 @@ public class DropboxManager {
 	 */
 	public boolean isLoggedin(){
 		return mDbxAcctMgr.hasLinkedAccount();
+	}
+	
+	/**
+	 * 
+	 * This method adds a {@link PathListener listener} to a given path.
+	 * 
+	 * @param listener	The listener that models the action to perform when a event happens.
+	 * @param path		The {@link DbxPath path} to be listened.
+	 * @param mode		The {@link Mode mode} in which the listener will operate.
+	 */
+	public void addListenerToPath(PathListener listener, DbxPath path, Mode mode){
+		if (mDbxFs == null)
+			if (!getDropboxFilesystem())
+				return;
+		
+		mDbxFs.addPathListener(listener, path, mode);
 	}
 	
 	/**
