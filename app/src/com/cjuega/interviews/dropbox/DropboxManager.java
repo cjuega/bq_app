@@ -5,6 +5,8 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.siegmann.epublib.domain.Book;
+
 import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
@@ -12,6 +14,7 @@ import android.util.Log;
 
 import com.cjuega.interviews.bq.R;
 import com.cjuega.interviews.bq.main.DropboxLibraryApplication;
+import com.cjuega.interviews.epub.EPubHelper;
 import com.dropbox.sync.android.DbxAccountManager;
 import com.dropbox.sync.android.DbxException;
 import com.dropbox.sync.android.DbxException.InvalidParameter;
@@ -151,6 +154,23 @@ public class DropboxManager {
 	
 	/**
 	 * 
+	 * This method checks if the given file is already cached.
+	 * 
+	 * @param file	The Dropbox file descriptor.
+	 * @return		True if the file is cached, false otherwise.
+	 */
+	public boolean isSync(DbxFile file){
+		try {
+			DbxFileStatus fileStatus = file.getSyncStatus();
+			return fileStatus.isCached;
+			
+		} catch (DbxException e){
+			return false;
+		}
+	}
+	
+	/**
+	 * 
 	 * This method adds a listener to a Dropbox file, so a {@code callback} can be called when the 
 	 * file is cached by the Dropbox Sync API. In contrast to 
 	 * {@link DropboxManager#forceReading(DbxFile, SimpleCallback) forceReading}, this method do not force 
@@ -161,15 +181,8 @@ public class DropboxManager {
 	 * @param callback	The callback when the file is cached by the Dropbox Sync API.
 	 */
 	public void prepareToRead (DbxFile file, SimpleCallback callback) {
-		try {
-			DbxFileStatus fileStatus = file.getSyncStatus();
-			
-			if (!fileStatus.isCached){
-				file.addListener(new FileListener(callback));
-			}
-			
-		} catch (DbxException e){
-			
+		if (!isSync(file)){
+			file.addListener(new FileListener(callback));
 		}
 	}
 	
@@ -182,17 +195,11 @@ public class DropboxManager {
 	 * @param callback	The callback when the file is cached by the Dropbox Sync API.
 	 */
 	public void forceReading (DbxFile file, SimpleCallback callback) {
-		try {
-			DbxFileStatus fileStatus = file.getSyncStatus();
-			
-			if (fileStatus.isCached){
-				callback.call(file);
-			} else {
-				DropboxReadFileTask task = new DropboxReadFileTask(callback);
-				task.execute(file);
-			}
-		} catch (DbxException e){
-			
+		if (isSync(file)){
+			callback.call(file);
+		} else {
+			DropboxReadFileTask task = new DropboxReadFileTask(callback);
+			task.execute(file);
 		}
 	}
 	
@@ -264,7 +271,7 @@ public class DropboxManager {
 	 * Class that offloads the heavy task of list all files of a given extension to a separate thread.
 	 *
 	 */
-	private class DropboxListingTask extends AsyncTask<Void, Void, List<DbxFileInfo>> {
+	private class DropboxListingTask extends AsyncTask<Void, Void, List<DbxEPubInfo>> {
 		List<DbxPath> pathsToExplore;
 		private String fileExtension;
 		int maxFiles;
@@ -278,7 +285,7 @@ public class DropboxManager {
 		}
 		
 		@Override
-		protected List<DbxFileInfo> doInBackground(Void... params) {
+		protected List<DbxEPubInfo> doInBackground(Void... params) {
 			try {				
 				if (!mDbxFs.hasSynced()){
 					mDbxFs.awaitFirstSync();
@@ -293,15 +300,17 @@ public class DropboxManager {
 		}
 
 		@Override
-		protected void onPostExecute(List<DbxFileInfo> result) {
+		protected void onPostExecute(List<DbxEPubInfo> result) {
 			if (result != null && mCallbackRef != null && mCallbackRef.get() != null){
 				mCallbackRef.get().call(new DropboxListingBean(pathsToExplore, result));
 			}
 		}
 		
-		private List<DbxFileInfo> iterativeGetFiles(List<DbxPath> paths, String fileExtension, int maxfiles){
-			ArrayList<DbxFileInfo> filesFound = new ArrayList<DbxFileInfo>();
+		private List<DbxEPubInfo> iterativeGetFiles(List<DbxPath> paths, String fileExtension, int maxfiles){
+			ArrayList<DbxEPubInfo> filesFound = new ArrayList<DbxEPubInfo>();
 			int nfiles = 0;
+			String titleWhenError = DropboxLibraryApplication.getAppContext().getString(R.string.library_book_title_no_sync);
+			
 			try {
 				// iterates over all the directories
 				while (!paths.isEmpty() && (maxfiles < 0 || nfiles < maxfiles)){
@@ -315,7 +324,19 @@ public class DropboxManager {
 							paths.add(fileInfo.path);
 						// if it is the kind of file we are looking for we include it in filesFound
 						else if (fileExtension == null || fileInfo.path.getName().contains(fileExtension)){
-							filesFound.add(fileInfo);
+							DbxEPubInfo newItem = new DbxEPubInfo(fileInfo);
+							newItem.setEPubBookName(titleWhenError);
+							/*
+							DbxFile file = DropboxManager.getInstance().open(fileInfo.path);
+							if (DropboxManager.getInstance().isSync(file)){
+								Book book = EPubHelper.openBookFromFile(file);
+								if (book != null && book.getMetadata() != null)
+									newItem.setEPubBookName(book.getMetadata().getFirstTitle());
+							} else {
+								file.close();
+							}*/
+								
+							filesFound.add(newItem);
 							nfiles++;
 						}
 					}

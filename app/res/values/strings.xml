@@ -12,20 +12,25 @@
     
     <string name="action_sort">Sort by:</string>
     <string-array name="action_sortby_list">
-        <!-- <item>book\'s title</item>  -->
         <item>filename</item>
         <item>creation date</item>
+        <item>book\'s title</item>
     </string-array>
     <string name="action_logout">Log out</string>
     
     <string name="library_empty_list">Your library is not available or it\'s empty.</string>
     
-    <string name="library_book_title_no_sync">Title not available</string>
+    <string name="library_book_title_no_sync">Title is not available</string>
     
     <string name="library_book_title">Title: %1$s</string>
     <string name="library_book_author">Authors: %1$s</string>
     
     <string name="dropbox_connection_error">Are you connected to dropbox?</string>
     <string name="dropbox_open_file_error">The file is not available</string>
+    
+    <string name="dialog_title">Files not synchronized!!</string>
+    <string name="dialog_message">The files you want to sort are not synchronized. In order to sort them by book\'s title I need to download %1$s. Do you want me to continue?</string>
+    <string name="dialog_yes">Yes</string>
+    <string name="dialog_no">No</string>
     
 </resources>
