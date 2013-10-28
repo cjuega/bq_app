@@ -42,14 +42,13 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 	private static final int SORT_BY_BOOKTITLE = 1;
 	private static final int SORT_BY_FILENAME = 2;
 	private static final int SORT_BY_CREATION_DATE = 3;
+	private int mSortMethod;
 	
 	private static final String PATHS_KEY = "PATHS_KEY";
 	private static final String SEPARATOR = "|";
 	private List<DbxPath> mPathsToExplore;
 	
 	private static final int MAX_FILES_PER_REQUEST = 20;
-	
-	private int mSortMethod;
 	
 	private OnFileSelectedListener mCallback;
 	private ActionBar mActionBar;
@@ -81,9 +80,11 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
         }
     }
     
+    
+    
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		
+				
 		if (savedInstanceState == null){
 			mSortMethod = SORT_BY_FILENAME;
 			mPathsToExplore = new ArrayList<DbxPath>();
@@ -120,7 +121,7 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 		
 		TextView emptyText = (TextView) view.findViewById(android.R.id.empty);
 		emptyText.setText(R.string.library_empty_list);
-
+		
 		return view;
 	}
 

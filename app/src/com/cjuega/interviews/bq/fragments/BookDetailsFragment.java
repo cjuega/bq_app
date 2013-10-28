@@ -33,11 +33,11 @@ public class BookDetailsFragment extends Fragment implements DropboxManager.Simp
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
-		setRetainInstance(true);
-		
+				
 		if (savedInstanceState == null){
 			mFilename = getArguments().getString(FILENAME);
+		} else {
+			mFilename = savedInstanceState.getString(FILENAME);
 		}
 	}
 
@@ -61,12 +61,16 @@ public class BookDetailsFragment extends Fragment implements DropboxManager.Simp
 		if (mFilename != null){
 			DbxFile file = DropboxManager.getInstance().open(new DbxPath(mFilename));
 			DropboxManager.getInstance().forceReading(file, this);
-			
+				
 		} else {
-			if (savedInstanceState == null){
-				whenBookDataIsNotAvailable();
-			}
+			whenBookDataIsNotAvailable();
 		}
+	}
+
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		outState.putString(FILENAME, mFilename);
 	}
 
 	private void whenBookDataIsNotAvailable() {
@@ -99,6 +103,7 @@ public class BookDetailsFragment extends Fragment implements DropboxManager.Simp
 					mBookAuthorsTextView.setText(String.format(getString(R.string.library_book_author), book.getMetadata().getAuthors()));
 				}
 			} else {
+				Toast.makeText(getActivity(), getString(R.string.dropbox_open_file_error), Toast.LENGTH_SHORT).show();
 				whenBookDataIsNotAvailable();
 			}
 		} else {

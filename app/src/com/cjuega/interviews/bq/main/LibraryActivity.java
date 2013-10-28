@@ -5,7 +5,6 @@ import com.cjuega.interviews.bq.fragments.BookDetailsFragment;
 import com.cjuega.interviews.bq.fragments.FileListFragment;
 import com.cjuega.interviews.bq.fragments.FileListFragment.OnFileSelectedListener;
 import com.cjuega.interviews.dropbox.DropboxManager;
-import com.dropbox.sync.android.DbxFileInfo;
 import com.dropbox.sync.android.DbxPath;
 
 import android.os.Bundle;
