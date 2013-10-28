@@ -30,7 +30,8 @@
         
         <activity 
             android:name="com.cjuega.interviews.bq.main.LibraryActivity"
-        	android:theme="@style/Theme.AppCompat.Light" />
+        	android:theme="@style/Theme.AppCompat.Light"
+        	android:configChanges="orientation|screenSize" />
         
         <activity android:name="com.dropbox.sync.android.DbxAuthActivity" />
         
