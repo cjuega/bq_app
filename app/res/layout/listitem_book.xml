@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout 
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="?android:attr/listPreferredItemHeight" >
+	
+    <ImageView 
+        android:id="@+id/list_item_book_thumbtail"
+	    android:layout_width="wrap_content"
+       	android:layout_height="wrap_content"
+       	android:src="@drawable/ic_epub"
+       	android:layout_alignParentLeft="true"
+       	android:layout_toLeftOf="@+id/list_item_book_title"/>
+    
+    <TextView 
+        android:id="@id/list_item_book_title"
+	    android:layout_width="wrap_content"
+       	android:layout_height="wrap_content"
+       	android:layout_toLeftOf="@+id/list_item_book_filesize"/>
+    
+    <TextView 
+        android:id="@+id/list_item_filename"
+	    android:layout_width="wrap_content"
+       	android:layout_height="wrap_content"
+       	android:layout_toRightOf="@id/list_item_book_thumbtail"
+       	android:layout_toLeftOf="@id/list_item_book_filesize"
+       	android:layout_below="@id/list_item_book_title"/>
+    
+    <TextView 
+        android:id="@id/list_item_book_filesize"
+	    android:layout_width="wrap_content"
+       	android:layout_height="wrap_content"
+       	android:layout_alignParentRight="true" />
+        
+</RelativeLayout>

@@ -11,7 +11,7 @@ import android.view.ViewGroup;
 
 public class EndlessSortedListAdapter<T> extends SortedListAdapter<T> {
 			
-	private DataRequester mRequester;
+	protected DataRequester mRequester;
 	private boolean mLoading;
 	private boolean mMoreDataToLoad;
 	
@@ -110,7 +110,7 @@ public class EndlessSortedListAdapter<T> extends SortedListAdapter<T> {
 		mMoreDataToLoad = false;
 	}
 
-	private boolean shouldLoadMoreData(List<T> list, int position){
+	protected boolean shouldLoadMoreData(List<T> list, int position){
 		boolean scrollRangeReached = (position > list.size()/2);
 		return (scrollRangeReached && !mLoading && mMoreDataToLoad);
 	}

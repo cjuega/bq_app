@@ -20,6 +20,8 @@
     
     <string name="library_empty_list">Your library is not available or it\'s empty.</string>
     
+    <string name="library_book_title_no_sync">Title not available</string>
+    
     <string name="library_book_title">Title: %1$s</string>
     <string name="library_book_author">Authors: %1$s</string>
     
