@@ -25,6 +25,8 @@ public class BookAdapterListener implements BookListener {
 	@Override
 	public void OnBookReady(Book book) {
 		mFileInfo.setEPubBookTitle(book.getMetadata().getFirstTitle());
+		if (mAdapter.areTitlesAvailable())
+			mAdapter.sort();
 		mAdapter.notifyDataSetChanged();
 	}
 }
