@@ -16,6 +16,14 @@ import com.cjuega.interviews.dropbox.DbxEPubInfo;
 import com.cjuega.interviews.dropbox.DropboxManager;
 import com.cjuega.interviews.epub.EPubHelper;
 
+/**
+ * 
+ * @author cjuega
+ * 
+ * Particular adapter to represent epub files. Since Title sorting is a plus, this adapter includes 
+ * some methods to ensure the epub files within it contains the book's title
+ *
+ */
 public class DropboxFileAdapter extends EndlessSortedListAdapter<DbxEPubInfo> {
 	
 	public DropboxFileAdapter(Context context,

@@ -9,6 +9,16 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
+/**
+ * 
+ * @author cjuega
+ *
+ * This class is an extension of {@link SortedListAdapter SortedListAdapter} that implements a 
+ * sorted list without ending. Every time a user scrolls down the list, this adapter will 
+ * automatically request new data to a {@link DataRequester DataRequester}. 
+ *
+ * @param <T>	The element's type this adapter will hold.
+ */
 public class EndlessSortedListAdapter<T> extends SortedListAdapter<T> {
 			
 	protected DataRequester mRequester;

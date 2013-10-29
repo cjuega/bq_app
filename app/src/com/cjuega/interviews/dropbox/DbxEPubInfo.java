@@ -2,6 +2,14 @@ package com.cjuega.interviews.dropbox;
 
 import com.dropbox.sync.android.DbxFileInfo;
 
+/**
+ * 
+ * @author cjuega
+ *
+ * Extended version of {@link DbxFileInfo DbxFileInfo} to represent epub files. It includes the DbxFileInfo 
+ * and the book's title.
+ *
+ */
 public class DbxEPubInfo {
 	private DbxFileInfo mFileInfo;
 	private String mEPubBookTitle;

@@ -17,7 +17,8 @@ import android.view.MenuItem;
  * 
  * @author cjuega
  *
- * This is the main activity in our application.
+ * This is the main activity in our application. It simple swaps two fragments: one for listing files and 
+ * a second for showing the details of the selected file.
  *
  */
 public class LibraryActivity extends ActionBarActivity implements OnFileSelectedListener {

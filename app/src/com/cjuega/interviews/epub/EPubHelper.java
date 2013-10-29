@@ -12,12 +12,27 @@ import com.dropbox.sync.android.DbxFileInfo;
 import nl.siegmann.epublib.domain.Book;
 import nl.siegmann.epublib.epub.EpubReader;
 
+/**
+ * 
+ * @author cjuega
+ *
+ * This class is in charge of deal with the ePubLib. It uses the {@link OpenBookTask OpenBookTask}  
+ * to offload the IO operations regarding open epub files to secondary threads.
+ *
+ */
 public class EPubHelper {
 	
 	private static EPubHelper mInstance;
 	
 	private EPubHelper(){}
 	
+	/**
+	 * 
+	 * @author cjuega
+	 *
+	 * Interface used to notify when the book is read.
+	 *
+	 */
 	public interface BookListener {
 		public void OnBookReady(Book book);
 	}

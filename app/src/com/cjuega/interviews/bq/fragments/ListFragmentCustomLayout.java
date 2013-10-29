@@ -9,6 +9,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 
+/**
+ * 
+ * @author cjuega
+ *
+ * ListFragment used to show/hide a ProgressBar when a custom layout is supplied. Note 
+ * that standard {@link ListFragment ListFragment} does not allow it.
+ *
+ */
 public class ListFragmentCustomLayout extends ListFragment{
 	private boolean mListShown;
 	private View mProgressContainer;

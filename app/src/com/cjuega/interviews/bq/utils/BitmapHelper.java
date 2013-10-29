@@ -10,6 +10,15 @@ import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.widget.ImageView;
 
+/**
+ * 
+ * @author cjuega
+ * 
+ * Helper class to deal with Bitmap decoding in Android. It uses {@link StreamBitmapWorkerTask StreamBitmapWorkerTask} 
+ * and {@link ResourcesBitmapWorkerTask ResourcesBitmapWorkerTask} to decode bitmaps in a separate thread from a {@code InputStream} 
+ * and {@code Resources} respectively.
+ *
+ */
 public class BitmapHelper {
 
 	public void loadBitmapFromInputStream(ImageView imageViewToAttach, InputStream input){

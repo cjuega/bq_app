@@ -21,6 +21,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+/**
+ * 
+ * @author cjuega
+ *
+ * Simple Fragment that shows epub files (well at least (1) the book's title, (2) book's author and (3) 
+ * the book's cover image. It uses {@link EPubHelper EPubHelper} to open the file.
+ *
+ */
 public class BookDetailsFragment extends Fragment implements DropboxManager.SimpleCallback, BookListener {
 
 	public static final String FILENAME = "FILENAME";

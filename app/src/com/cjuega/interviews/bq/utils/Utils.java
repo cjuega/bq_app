@@ -1,5 +1,12 @@
 package com.cjuega.interviews.bq.utils;
 
+/**
+ * 
+ * @author cjuega
+ *
+ * Helper functions
+ *
+ */
 public class Utils {	
 	public static String humanReadableByteCount(long bytes, boolean si) {
 	    int unit = si ? 1000 : 1024;
