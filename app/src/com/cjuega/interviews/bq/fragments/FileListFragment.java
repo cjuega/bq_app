@@ -63,7 +63,7 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 	
 	// Container Activity must implement this interface
     public interface OnFileSelectedListener {
-        public void OnFileSelected(DbxPath path);
+        public void onFileSelected(DbxPath path);
     }
 
     @Override
@@ -98,7 +98,6 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 			mShowingDialogBytes = savedInstanceState.getLong(SHOW_DIALOG_KEY);
 			showSyncDialog(mShowingDialogBytes);
 		}
-
 		
 		super.onCreate(savedInstanceState);
 	}
@@ -115,7 +114,7 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 			@Override
 			public void OnItemDoubleClick(AdapterView<?> parent, View view,
 					int position, long id) {
-				mCallback.OnFileSelected(mAdapter.getItem(position).getFileInfo().path);
+				mCallback.onFileSelected(mAdapter.getItem(position).getFileInfo().path);
 			}
 		});
 		
@@ -317,15 +316,15 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 			mPathsToExplore = ((DropboxListingBean)listOfPathsAndFiles).getPaths();
 			List<DbxEPubInfo> files = ((DropboxListingBean)listOfPathsAndFiles).getFiles();
 			
-			mAdapter.addAll(files);
+			//mAdapter.addAll(files);
 			
-			/* Probably faster than mAdapter.addAll(files) because elements are inserted in the correct position 
-			 * and it does not require to sort again
-			for (DbxFileInfo dbxFileInfo : files) {
-				mAdapter.add(dbxFileInfo);
+			// Probably faster than mAdapter.addAll(files) because elements are inserted in the correct position 
+			// and it does not require to sort again. And does not include existing elements!
+			for (DbxEPubInfo dbxEPubInfo : files) {
+				mAdapter.add(dbxEPubInfo);
 			}
 			mAdapter.setNoMoreDataToLoad();
-			*/
+			
 			
 			mAdapter.setLoading(false);
 			getLoadingFooterView().setVisibility(View.GONE);

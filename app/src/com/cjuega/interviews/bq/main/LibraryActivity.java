@@ -59,7 +59,7 @@ public class LibraryActivity extends ActionBarActivity implements OnFileSelected
     }
 
 	@Override
-	public void OnFileSelected(DbxPath path) {
+	public void onFileSelected(DbxPath path) {
 		
 		Bundle args = new Bundle();
 		args.putString(BookDetailsFragment.FILENAME, path.toString());
