@@ -3,7 +3,6 @@ package com.cjuega.interviews.bq.widgets;
 import java.util.Comparator;
 import java.util.List;
 
-import nl.siegmann.epublib.domain.Book;
 
 import android.content.Context;
 import android.view.View;
@@ -15,11 +14,7 @@ import com.cjuega.interviews.bq.R;
 import com.cjuega.interviews.bq.utils.Utils;
 import com.cjuega.interviews.dropbox.DbxEPubInfo;
 import com.cjuega.interviews.dropbox.DropboxManager;
-import com.cjuega.interviews.dropbox.DropboxManager.SimpleCallback;
 import com.cjuega.interviews.epub.EPubHelper;
-import com.dropbox.sync.android.DbxException;
-import com.dropbox.sync.android.DbxFile;
-import com.dropbox.sync.android.DbxFileStatus;
 
 public class DropboxFileAdapter extends EndlessSortedListAdapter<DbxEPubInfo> {
 	
@@ -43,49 +38,36 @@ public class DropboxFileAdapter extends EndlessSortedListAdapter<DbxEPubInfo> {
 	
 	public long isSync(){
 		long bytesToDonwload = 0;
-		try{
+		synchronized (DropboxManager.getInstance().getLock()) {
 			for (DbxEPubInfo fileInfo : mData) {
-				DbxFile file = DropboxManager.getInstance().open(fileInfo.getFileInfo().path);
-				DbxFileStatus fileStatus = file.getSyncStatus();
-				if (!fileStatus.isCached){
+				if (!DropboxManager.getInstance().isSync(fileInfo.getFileInfo()))
 					bytesToDonwload += fileInfo.getFileInfo().size;
-				}
-				file.close();
 			}
-			return bytesToDonwload;
-			
-		} catch (DbxException e){
-			
-			return -1;
+		}
+		return bytesToDonwload;
+	}
+	
+	public boolean areTitlesAvailable(){
+		for (DbxEPubInfo fileInfo : mData) {
+			if (!fileInfo.isTitleAvailable())
+				return false;
+		}
+		return true;
+	}
+	
+	public void demandTitles(){
+		for (DbxEPubInfo fileInfo : mData) {
+			if (!fileInfo.isTitleAvailable()){
+				EPubHelper.getInstance().openBookFromFileInfo(fileInfo.getFileInfo(),
+															  new BookAdapterListener(fileInfo, this),
+															  true);
+			}
 		}
 	}
 	
 	public void syncAllFiles() {
 		for (DbxEPubInfo fileInfo : mData) {
-			DbxFile file = DropboxManager.getInstance().open(fileInfo.getFileInfo().path);
-			DropboxManager.getInstance().forceReading(file, new SyncFileCallback(fileInfo));
-		}
-	}
-	
-	private class SyncFileCallback implements SimpleCallback {
-		private DbxEPubInfo epubInfo;
-		
-		public SyncFileCallback(DbxEPubInfo fileInfo){
-			epubInfo = fileInfo;
-		}
-
-		@Override
-		public void call(Object dbxFile) {
-			if (dbxFile != null && dbxFile instanceof DbxFile){
-				
-				Book book = EPubHelper.openBookFromFile((DbxFile) dbxFile);
-				if (book != null && book.getMetadata() != null){
-					epubInfo.setEPubBookName(book.getMetadata().getFirstTitle());
-					DropboxFileAdapter.this.notifyDataSetChanged();
-				} else {
-					((DbxFile) dbxFile).close();
-				}
-			}
+			DropboxManager.getInstance().forceReading(fileInfo.getFileInfo(), new SyncFileAdapterListener(fileInfo, this));
 		}
 	}
 	
@@ -118,10 +100,7 @@ public class DropboxFileAdapter extends EndlessSortedListAdapter<DbxEPubInfo> {
 		
 		// The logo is already set in the xml. We could here use a dynamic icon.
 		//dropboxFileHolder.logo.setImageResource(R.drawable.ic_epub);
-		if (fileInfo.getEPubBookName() != null)
-			dropboxFileHolder.title.setText(fileInfo.getEPubBookName());
-		else
-			dropboxFileHolder.title.setText(R.string.library_book_title_no_sync);
+		dropboxFileHolder.title.setText(fileInfo.getEPubBookTitle());
 		dropboxFileHolder.filename.setText(fileInfo.getFileInfo().path.getName());
 		dropboxFileHolder.size.setText(Utils.humanReadableByteCount(fileInfo.getFileInfo().size, false));
 		
