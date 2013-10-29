@@ -183,7 +183,6 @@ public class DropboxManager {
 			return null;
 		
 		try {
-			Log.d("DropboxManager", "open -> trying to open: "+path.getName());
 			DbxFile file = mDbxFs.open(path);
 			return file;
 			
@@ -204,7 +203,6 @@ public class DropboxManager {
 	public boolean isSync(DbxFileInfo fileInfo){
 		DbxFile file = null;
 		try {
-			Log.d("DropboxManager", "isSync -> trying to open file: "+fileInfo.path.getName());
 			file = open(fileInfo.path);
 			DbxFileStatus fileStatus = file.getSyncStatus();
 			return fileStatus.isCached;
@@ -213,7 +211,6 @@ public class DropboxManager {
 			return false;
 		} finally {
 			if (file != null){
-				Log.d("DropboxManager", "isSync -> close file: "+fileInfo.path.getName());
 				file.close();
 			}
 		}
@@ -233,10 +230,10 @@ public class DropboxManager {
 			forceReading(fileInfo, callback);
 			
 		} catch (NotFound e){
-			Log.i("DropboxManager", "forceReadingFromPath -> NotFound exception: "+e.getMessage());
+			Log.e("DropboxManager", "forceReadingFromPath -> NotFound exception: "+e.getMessage());
 			
 		} catch (DbxException e) {
-			Log.i("DropboxManager", "forceReadingFromPath -> DbxException: "+e.getMessage());
+			Log.e("DropboxManager", "forceReadingFromPath -> DbxException: "+e.getMessage());
 		}
 	}
 	
@@ -353,7 +350,6 @@ public class DropboxManager {
 						}
 						// if it is the kind of file we are looking for we include it in filesFound
 						else if (fileExtension == null || fileInfo.path.getName().contains(fileExtension)){
-							Log.d("DropboxListingTask", "file found");
 							DbxEPubInfo newItem = new DbxEPubInfo(fileInfo, fileInfo.path.getName());
 								
 							filesFound.add(newItem);
@@ -402,7 +398,6 @@ public class DropboxManager {
 			// To ensure that only only DbxFile is opened
 			synchronized (DropboxManager.getInstance().getLock()) {
 				try {
-					Log.d("DropboxReadFileTask", "doInBackground -> trying to open file: "+params[0].path.getName());
 					file = DropboxManager.getInstance().open(fileInfo.path);
 					file.getReadStream();
 					return params[0];
@@ -415,7 +410,6 @@ public class DropboxManager {
 					
 				} finally {
 					if (file != null){
-						Log.d("DropboxReadFileTask", "doInBackground -> close file: "+params[0].path.getName());
 						file.close();
 					}
 				}

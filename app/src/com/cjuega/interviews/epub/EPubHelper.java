@@ -3,7 +3,6 @@ package com.cjuega.interviews.epub;
 import java.io.IOException;
 
 import android.os.AsyncTask;
-import android.util.Log;
 
 import com.cjuega.interviews.dropbox.DropboxManager;
 import com.dropbox.sync.android.DbxException;
@@ -53,7 +52,6 @@ public class EPubHelper {
 				DbxFile file = null;
 				try {
 					if (!mCheckSync || DropboxManager.getInstance().isSync(fileInfo)){
-						Log.d("OpenBookTask", "doInBackground -> trying to open file: "+fileInfo.path.getName());
 						file = DropboxManager.getInstance().open(fileInfo.path);
 						
 						EpubReader reader = new EpubReader();
@@ -65,7 +63,6 @@ public class EPubHelper {
 					
 				} finally {
 					if (file != null){
-						Log.d("OpenBookTask", "doInBackground -> closing file: "+file.getPath().getName());
 						file.close();
 					}
 				}
