@@ -1,7 +1,6 @@
 package com.cjuega.interviews.dropbox;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -140,12 +139,14 @@ public class DropboxManager {
 	 * 
 	 * @param extension		File extension this method will look for. If it is null then all files are selected.
 	 * @param callback		The callback when the files are already listed.
+	 * @param pathListener	The listener to be added to the folder that the method explores.
+	 * @param listen		Boolean that indicates if the method must add the listener or not.
 	 */
-	public void getAllFiles(String extension, SimpleCallback callback){
+	public void getAllFiles(String extension, SimpleCallback callback, PathListener pathListener, boolean listen){
 		ArrayList<DbxPath> pathToRoot = new ArrayList<DbxPath>(1);
 		pathToRoot.add(DbxPath.ROOT);
 		
-		getFiles(pathToRoot, extension, -1, callback);
+		getFiles(pathToRoot, extension, -1, callback, pathListener, listen);
 	}
 	
 	/**
@@ -162,12 +163,14 @@ public class DropboxManager {
 	 * @param extension		File extension this method will look for. If it is null then all files are selected.
 	 * @param maxFiles		Relative max number of files to list. Negative values mean there is no limit.
 	 * @param callback		The callback when the files are already listed.
+	 * @param pathListener	The listener to be added to the folder that the method explores.
+	 * @param listen		Boolean that indicates if the method must add the listener or not.
 	 */
-	public void getFiles(List<DbxPath> paths, String extension, int maxFiles, SimpleCallback callback){
+	public void getFiles(List<DbxPath> paths, String extension, int maxFiles, SimpleCallback callback, PathListener pathListener, boolean listen){
 		if (!getDropboxFilesystem())
 			return;
 		
-		DropboxListingTask task = new DropboxListingTask(paths, extension, maxFiles, callback);
+		DropboxListingTask task = new DropboxListingTask(paths, extension, maxFiles, callback, pathListener, listen);
 		task.execute();
 	}
 	
@@ -295,16 +298,20 @@ public class DropboxManager {
 	 *
 	 */
 	private class DropboxListingTask extends AsyncTask<Void, Void, List<DbxEPubInfo>> {
-		List<DbxPath> pathsToExplore;
+		private List<DbxPath> pathsToExplore;
 		private String fileExtension;
-		int maxFiles;
-		private WeakReference<SimpleCallback> mCallbackRef;
+		private int maxFiles;
+		private SimpleCallback mCallback;
+		private PathListener mPathListener;
+		private boolean mListen;
 
-		public DropboxListingTask (List<DbxPath> paths, String extension, int maxfiles, SimpleCallback callback){
+		public DropboxListingTask (List<DbxPath> paths, String extension, int maxfiles, SimpleCallback callback, PathListener listener, boolean listen){
 			pathsToExplore = paths;
 			fileExtension = extension;
 			maxFiles = maxfiles;
-			mCallbackRef = new WeakReference<DropboxManager.SimpleCallback>(callback);
+			mCallback = callback;
+			mPathListener = listener;
+			mListen = listen;
 		}
 		
 		@Override
@@ -324,8 +331,8 @@ public class DropboxManager {
 
 		@Override
 		protected void onPostExecute(List<DbxEPubInfo> result) {
-			if (result != null && mCallbackRef != null && mCallbackRef.get() != null){
-				mCallbackRef.get().call(new DropboxListingBean(pathsToExplore, result));
+			if (result != null && mCallback != null){
+				mCallback.call(new DropboxListingBean(pathsToExplore, result));
 			}
 		}
 		
@@ -346,7 +353,8 @@ public class DropboxManager {
 							paths.add(fileInfo.path);
 							// In addition it would be useful to add a listener to this folder as well. So 
 							// if somebody adds new files (ebooks) to the account we will immediately know it.
-							//DropboxManager.getInstance().addListenerToPath(listener, fileInfo.path, Mode.PATH_OR_CHILD);
+							if (mListen && mPathListener != null)
+								DropboxManager.getInstance().addListenerToPath(mPathListener, fileInfo.path, Mode.PATH_OR_CHILD);
 						}
 						// if it is the kind of file we are looking for we include it in filesFound
 						else if (fileExtension == null || fileInfo.path.getName().contains(fileExtension)){
@@ -384,10 +392,10 @@ public class DropboxManager {
 	 * 
 	 */
 	private class DropboxReadFileTask extends AsyncTask<DbxFileInfo, Void, DbxFileInfo> {
-		private WeakReference<SimpleCallback> mCallbackRef;
+		private SimpleCallback mCallback;
 		
 		public DropboxReadFileTask(SimpleCallback callback){
-			mCallbackRef = new WeakReference<DropboxManager.SimpleCallback>(callback);
+			mCallback = callback;
 		}
 
 		@Override
@@ -418,9 +426,9 @@ public class DropboxManager {
 
 		@Override
 		protected void onPostExecute(DbxFileInfo result) {
-			if (result != null && mCallbackRef != null && mCallbackRef.get() != null){
+			if (result != null && mCallback != null){
 				if (DropboxManager.getInstance().isSync(result)){
-					mCallbackRef.get().call(result);
+					mCallback.call(result);
 				}
 			}
 		}

@@ -16,6 +16,8 @@ import com.cjuega.interviews.dropbox.DbxEPubInfo;
 import com.cjuega.interviews.dropbox.DropboxListingBean;
 import com.cjuega.interviews.dropbox.DropboxManager;
 import com.cjuega.interviews.epub.EPubHelper;
+import com.dropbox.sync.android.DbxFileSystem;
+import com.dropbox.sync.android.DbxFileSystem.PathListener;
 import com.dropbox.sync.android.DbxPath;
 
 import android.app.Activity;
@@ -34,9 +36,22 @@ import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+/**
+ * 
+ * @author cjuega
+ * 
+ * Fragment to show a list of files from Dropbox.
+ * It implements {@link DataRequester DataRequester} so the fragment can request data for its {@link DropboxFileAdapter adapter}.
+ * It implements {@link DropboxManager.SimpleCallback SimpleCallback} so the fragment can add the files listed by 
+ * {@link DropboxManager#getFiles(List, String, int, com.cjuega.interviews.dropbox.DropboxManager.SimpleCallback, PathListener, boolean) DropboxManager.getFiles} 
+ * to the Fragment's {@link DropboxFileAdapter adapter}.
+ * It implements {@link PathListener PathListener} so the fragment can add the folders that remotely change
+ * in Dropbox the list of folder to explore.
+ *
+ */
 public class FileListFragment extends ListFragmentCustomLayout implements ActionBar.OnNavigationListener,
 															  		 	  DropboxManager.SimpleCallback,
-															  		 	  DataRequester {
+															  		 	  DataRequester, PathListener {
 	
 	private static final String FILE_EXTENSION = ".epub";
 	
@@ -351,6 +366,13 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 	@Override
 	public void requestData() {
 		getLoadingFooterView().setVisibility(View.VISIBLE);
-		DropboxManager.getInstance().getFiles(mPathsToExplore, FILE_EXTENSION, MAX_FILES_PER_REQUEST, this);
+		DropboxManager.getInstance().getFiles(mPathsToExplore, FILE_EXTENSION, MAX_FILES_PER_REQUEST, this, this, true);
+	}
+	
+	@Override
+	public void onPathChange(DbxFileSystem dbxFileSystem, DbxPath dbxPath, Mode mode) {
+		// We just need to add the folder in which the change happen to our paths to explore.
+		mPathsToExplore.add(dbxPath);
+		requestData();
 	}
 }
