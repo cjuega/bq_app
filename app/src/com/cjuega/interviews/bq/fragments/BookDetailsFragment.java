@@ -8,7 +8,8 @@ import com.cjuega.interviews.bq.R;
 import com.cjuega.interviews.bq.utils.BitmapHelper;
 import com.cjuega.interviews.dropbox.DropboxManager;
 import com.cjuega.interviews.epub.EPubHelper;
-import com.dropbox.sync.android.DbxFile;
+import com.cjuega.interviews.epub.EPubHelper.BookListener;
+import com.dropbox.sync.android.DbxFileInfo;
 import com.dropbox.sync.android.DbxPath;
 
 import android.os.Bundle;
@@ -20,7 +21,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class BookDetailsFragment extends Fragment implements DropboxManager.SimpleCallback {
+public class BookDetailsFragment extends Fragment implements DropboxManager.SimpleCallback, BookListener {
 
 	public static final String FILENAME = "FILENAME";
 	
@@ -59,9 +60,7 @@ public class BookDetailsFragment extends Fragment implements DropboxManager.Simp
 		super.onActivityCreated(savedInstanceState);
 		
 		if (mFilename != null){
-			DbxFile file = DropboxManager.getInstance().open(new DbxPath(mFilename));
-			DropboxManager.getInstance().forceReading(file, this);
-				
+			DropboxManager.getInstance().forceReadingFromPath(new DbxPath(mFilename), this);
 		} else {
 			whenBookDataIsNotAvailable();
 		}
@@ -81,30 +80,33 @@ public class BookDetailsFragment extends Fragment implements DropboxManager.Simp
 	}
 
 	@Override
-	public void call(Object dbxFile) {
-		if (dbxFile != null && dbxFile instanceof DbxFile){
-			// file.getReadStream() will never block the UI thread because we already guarantee that the files is cached
-			Book book = EPubHelper.openBookFromFile((DbxFile) dbxFile);
-				
-			if (book != null) {
-				
-				BitmapHelper helper = new BitmapHelper();
-				if (book.getCoverImage() != null)
-					try {
-						helper.loadBitmapFromInputStream(mBookCoverTextView, book.getCoverImage().getInputStream());
-					} catch (IOException e) {
-						helper.loadBitmapFromResources(mBookCoverTextView, R.drawable.epub_logo);
-					}
-				else
+	public void call(Object dbxFileInfo) {
+		if (dbxFileInfo != null && dbxFileInfo instanceof DbxFileInfo){
+			EPubHelper.getInstance().openBookFromFileInfo((DbxFileInfo)dbxFileInfo, this, false);
+
+		} else {
+			Toast.makeText(getActivity(), getString(R.string.dropbox_open_file_error), Toast.LENGTH_SHORT).show();
+			whenBookDataIsNotAvailable();
+		}
+	}
+
+	@Override
+	public void OnBookReady(Book book) {
+		if (book != null) {
+			
+			BitmapHelper helper = new BitmapHelper();
+			if (book.getCoverImage() != null)
+				try {
+					helper.loadBitmapFromInputStream(mBookCoverTextView, book.getCoverImage().getInputStream());
+				} catch (IOException e) {
 					helper.loadBitmapFromResources(mBookCoverTextView, R.drawable.epub_logo);
-						
-				if (book.getMetadata() != null){
-					mBookTitleTextView.setText(String.format(getString(R.string.library_book_title), book.getMetadata().getFirstTitle()));
-					mBookAuthorsTextView.setText(String.format(getString(R.string.library_book_author), book.getMetadata().getAuthors()));
 				}
-			} else {
-				Toast.makeText(getActivity(), getString(R.string.dropbox_open_file_error), Toast.LENGTH_SHORT).show();
-				whenBookDataIsNotAvailable();
+			else
+				helper.loadBitmapFromResources(mBookCoverTextView, R.drawable.epub_logo);
+					
+			if (book.getMetadata() != null){
+				mBookTitleTextView.setText(String.format(getString(R.string.library_book_title), book.getMetadata().getFirstTitle()));
+				mBookAuthorsTextView.setText(String.format(getString(R.string.library_book_author), book.getMetadata().getAuthors()));
 			}
 		} else {
 			Toast.makeText(getActivity(), getString(R.string.dropbox_open_file_error), Toast.LENGTH_SHORT).show();

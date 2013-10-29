@@ -7,6 +7,7 @@ import java.util.StringTokenizer;
 
 import com.cjuega.interviews.bq.R;
 import com.cjuega.interviews.bq.utils.Utils;
+import com.cjuega.interviews.bq.widgets.BookAdapterListener;
 import com.cjuega.interviews.bq.widgets.DataRequester;
 import com.cjuega.interviews.bq.widgets.DoubleClickSupportedListView;
 import com.cjuega.interviews.bq.widgets.DoubleClickSupportedListView.OnItemDoubleClickListener;
@@ -14,6 +15,7 @@ import com.cjuega.interviews.bq.widgets.DropboxFileAdapter;
 import com.cjuega.interviews.dropbox.DbxEPubInfo;
 import com.cjuega.interviews.dropbox.DropboxListingBean;
 import com.cjuega.interviews.dropbox.DropboxManager;
+import com.cjuega.interviews.epub.EPubHelper;
 import com.dropbox.sync.android.DbxPath;
 
 import android.app.Activity;
@@ -23,6 +25,7 @@ import android.content.DialogInterface.OnClickListener;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -87,6 +90,7 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 				
 		if (savedInstanceState == null){
 			mSortMethod = SORT_BY_FILENAME;
+			Log.d("FileListFragment", "onCreate -> set sort method to "+mSortMethod);
 			mPathsToExplore = new ArrayList<DbxPath>();
 			mPathsToExplore.add(DbxPath.ROOT);
 			
@@ -94,6 +98,7 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 			mSortMethod = savedInstanceState.getInt(SORT_BY_KEY);
 			if (mSortMethod == 0)
 				mSortMethod = SORT_BY_FILENAME;	
+			Log.d("FileListFragment", "onCreate -> set sort method to "+mSortMethod);
 			mPathsToExplore = restorePathsListFromString(savedInstanceState.getString(PATHS_KEY));
 			mShowingDialogBytes = savedInstanceState.getLong(SHOW_DIALOG_KEY);
 			showSyncDialog(mShowingDialogBytes);
@@ -143,6 +148,7 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 		
 		if (mAdapter == null){
 			setListShown(false);
+			Log.d("FileListFragment", "restoring Comparator");
 			mAdapter = new DropboxFileAdapter(getActivity(), restoreComparator(mSortMethod), this);
 			setListAdapter(mAdapter);
 		}
@@ -182,22 +188,33 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 			switch (position) {
 			//Sort by filename
 			case 0:
+				Log.d("FileListFragment", "onNavigationItemSelected -> sorting by Filename");
 				mAdapter.sortby (new FilenameComparator());
 				mSortMethod = SORT_BY_FILENAME;
+				Log.d("FileListFragment", "onNavigationItemSelected -> set sort method to "+mSortMethod);
 				return true;
 				
 			//Sort by creation date
 			case 1:
+				Log.d("FileListFragment", "onNavigationItemSelected -> sorting by Date");
 				mAdapter.sortby (new CreationDateComparator());
 				mSortMethod = SORT_BY_CREATION_DATE;
+				Log.d("FileListFragment", "onNavigationItemSelected -> set sort method to "+mSortMethod);
 				return true;
 				
 			//Sort by book's title
 			case 2:
 				long bytesToDownload = mAdapter.isSync();
 				if (bytesToDownload == 0){
-					mAdapter.sortby (new BookTitleComparator());
-					mSortMethod = SORT_BY_BOOKTITLE;
+					if (mAdapter.areTitlesAvailable()){
+						Log.d("FileListFragment", "onNavigationItemSelected -> sorting by Title");
+						mAdapter.sortby (new BookTitleComparator());
+						mSortMethod = SORT_BY_BOOKTITLE;
+						Log.d("FileListFragment", "onNavigationItemSelected -> set sort method to "+mSortMethod);
+						
+					} else {
+						mAdapter.demandTitles();
+					}
 					
 				} else {
 					showSyncDialog(bytesToDownload);
@@ -290,7 +307,7 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 
 		@Override
 		public int compare(DbxEPubInfo lhs, DbxEPubInfo rhs) {
-			return lhs.getEPubBookName().compareTo(rhs.getEPubBookName());
+			return lhs.getEPubBookTitle().compareTo(rhs.getEPubBookTitle());
 		}
 	}
 	
@@ -321,10 +338,17 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 			// Probably faster than mAdapter.addAll(files) because elements are inserted in the correct position 
 			// and it does not require to sort again. And does not include existing elements!
 			for (DbxEPubInfo dbxEPubInfo : files) {
+				Log.d("FileListFragment", "inserting element");
 				mAdapter.add(dbxEPubInfo);
 			}
 			mAdapter.setNoMoreDataToLoad();
 			
+			for (DbxEPubInfo dbxEPubInfo : files) {
+				// If dbxEPubInfo is synchronized then we can get the book's title
+				if (DropboxManager.getInstance().isSync(dbxEPubInfo.getFileInfo())){
+					EPubHelper.getInstance().openBookFromFileInfo(dbxEPubInfo.getFileInfo(), new BookAdapterListener(dbxEPubInfo, mAdapter), true);
+				}
+			}
 			
 			mAdapter.setLoading(false);
 			getLoadingFooterView().setVisibility(View.GONE);
