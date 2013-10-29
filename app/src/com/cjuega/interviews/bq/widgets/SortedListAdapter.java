@@ -87,6 +87,7 @@ public class SortedListAdapter<T> extends BaseAdapter {
 			throw new IllegalStateException("SortedListAdapter requires a comparator");
 		}
 		
+		mComparator = comparator;
 		mContext = context;
 		mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		mResource = resource;
@@ -163,7 +164,13 @@ public class SortedListAdapter<T> extends BaseAdapter {
 	}
 	
 	public void sortby(Comparator<? super T> comparator){
+		if (comparator == null){
+			Log.e("SortedListAdapter", "You must supply a comparator object");
+			throw new IllegalStateException("SortedListAdapter requires a comparator");
+		}
+		
 		mComparator = comparator;
+		
 		sort();
 	}
 	
@@ -225,10 +232,8 @@ public class SortedListAdapter<T> extends BaseAdapter {
 		
 		@Override
 		protected Void doInBackground(Void... params) {
-			if (mData != null && mComparator != null){
-				synchronized (mLock) {
-					Collections.sort(mData, mComparator);	
-				}
+			synchronized (mLock) {
+				Collections.sort(mData, mComparator);	
 			}
 			return null;
 		}
