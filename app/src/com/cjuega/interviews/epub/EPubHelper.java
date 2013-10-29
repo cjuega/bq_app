@@ -2,6 +2,9 @@ package com.cjuega.interviews.epub;
 
 import java.io.IOException;
 
+import android.os.AsyncTask;
+import android.util.Log;
+
 import com.cjuega.interviews.dropbox.DropboxManager;
 import com.dropbox.sync.android.DbxException;
 import com.dropbox.sync.android.DbxFile;
@@ -11,42 +14,70 @@ import nl.siegmann.epublib.domain.Book;
 import nl.siegmann.epublib.epub.EpubReader;
 
 public class EPubHelper {
-	public static Book openBookFromFileInfo(DbxFileInfo fileInfo) {
-		DbxFile file = null;
-		Book book = null;
-		
-		try{
-			file = DropboxManager.getInstance().open(fileInfo.path);
-			EpubReader reader = new EpubReader();
-			book = reader.readEpub(file.getReadStream());
-			
-		} catch (DbxException e) {
-			
-		} catch (IOException e) {
-			
-		}finally{
-			if (file != null)
-			file.close();
-		}
-		
-		return book;
+	
+	private static EPubHelper mInstance;
+	
+	private EPubHelper(){}
+	
+	public interface BookListener {
+		public void OnBookReady(Book book);
 	}
 	
-	public static Book openBookFromFile(DbxFile file) {
-		Book book = null;
-		
-		try{
-			book = (new EpubReader()).readEpub(file.getReadStream());
-			
-		} catch (DbxException e) {
-			
-		} catch (IOException e) {
-			
-		}finally{
-			if (file != null)
-			file.close();
+	public static EPubHelper getInstance() {
+		if (mInstance == null){
+			mInstance = new EPubHelper();
 		}
+		return mInstance;
+	}
+	
+	public void openBookFromFileInfo(DbxFileInfo fileInfo, BookListener listener, boolean checkSync) {
+		OpenBookTask openBookTask = new OpenBookTask(listener, checkSync);
+		openBookTask.execute(fileInfo);
+	}
+	
+	private class OpenBookTask extends AsyncTask<DbxFileInfo, Void, Book>{
+		private BookListener mBookListener;
+		private boolean mCheckSync;
 		
-		return book;
+		public OpenBookTask(BookListener listener, boolean checkSync){
+			mBookListener = listener;
+			mCheckSync = checkSync;
+		}
+
+		@Override
+		protected Book doInBackground(DbxFileInfo... params) {
+			DbxFileInfo fileInfo = params[0];
+			Book book = null;
+			// To ensure that only only DbxFile is opened
+			synchronized (DropboxManager.getInstance().getLock()) {
+				DbxFile file = null;
+				try {
+					if (!mCheckSync || DropboxManager.getInstance().isSync(fileInfo)){
+						Log.d("OpenBookTask", "doInBackground -> trying to open file: "+fileInfo.path.getName());
+						file = DropboxManager.getInstance().open(fileInfo.path);
+						
+						EpubReader reader = new EpubReader();
+						book = reader.readEpub(file.getReadStream());
+					}
+				} catch (DbxException e) {
+					
+				} catch (IOException e) {
+					
+				} finally {
+					if (file != null){
+						Log.d("OpenBookTask", "doInBackground -> closing file: "+file.getPath().getName());
+						file.close();
+					}
+				}
+			}
+			return book;
+		}
+
+		@Override
+		protected void onPostExecute(Book result) {
+			if (mBookListener != null && result != null){
+				mBookListener.OnBookReady(result);
+			}
+		}
 	}
 }
