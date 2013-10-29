@@ -16,7 +16,7 @@ import nl.siegmann.epublib.epub.EpubReader;
  * 
  * @author cjuega
  *
- * This class is in charge of deal with the ePubLib. It uses the {@link OpenBookTask OpenBookTask}  
+ * This class deals with the ePubLib. It uses the {@link EPubHelper.OpenBookTask OpenBookTask}  
  * to offload the IO operations regarding open epub files to secondary threads.
  *
  */
@@ -49,6 +49,13 @@ public class EPubHelper {
 		openBookTask.execute(fileInfo);
 	}
 	
+	/**
+	 * 
+	 * @author cjuega
+	 * 
+	 * AsyncTask to open epub files.
+	 *
+	 */
 	private class OpenBookTask extends AsyncTask<DbxFileInfo, Void, Book>{
 		private BookListener mBookListener;
 		private boolean mCheckSync;

@@ -29,7 +29,7 @@ import com.dropbox.sync.android.DbxException.Unauthorized;
  * 
  * @author cjuega
  *
- * This class is in charge of deal with the Dropbox Sync API. It uses several classes that inherit 
+ * This class deals with the Dropbox Sync API. It uses several classes that inherit 
  * of {@link AsyncTask AsyncTask} to offload work (like list and read files) to secondary threads. Whenever 
  * the work is done, a {@link SimpleCallback callback} processes the downloaded data. 
  *  
