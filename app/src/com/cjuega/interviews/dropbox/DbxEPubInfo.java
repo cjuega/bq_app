@@ -4,27 +4,35 @@ import com.dropbox.sync.android.DbxFileInfo;
 
 public class DbxEPubInfo {
 	private DbxFileInfo mFileInfo;
-	private String mEPubBookName;
+	private String mEPubBookTitle;
+	private boolean mTitleAvailable;
 	
 	public DbxEPubInfo (DbxFileInfo fileInfo){
 		mFileInfo = fileInfo;
-		mEPubBookName = null;
+		mEPubBookTitle = null;
+		mTitleAvailable = false;
 	}
 	
-	public DbxEPubInfo (DbxFileInfo fileInfo, String epubBookName){
+	public DbxEPubInfo (DbxFileInfo fileInfo, String epubBookTitle){
 		mFileInfo = fileInfo;
-		mEPubBookName = epubBookName;
+		mEPubBookTitle = epubBookTitle;
+		mTitleAvailable = false;
 	}
 
-	public String getEPubBookName() {
-		return mEPubBookName;
+	public String getEPubBookTitle() {
+		return mEPubBookTitle;
 	}
 
-	public void setEPubBookName(String mEPubBookName) {
-		this.mEPubBookName = mEPubBookName;
+	public void setEPubBookTitle(String mEPubBookTitle) {
+		mTitleAvailable = true;
+		this.mEPubBookTitle = mEPubBookTitle;
 	}
 
 	public DbxFileInfo getFileInfo() {
 		return mFileInfo;
+	}
+	
+	public boolean isTitleAvailable(){
+		return mTitleAvailable;
 	}
 }
