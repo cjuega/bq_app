@@ -8,7 +8,7 @@ import java.util.StringTokenizer;
 import com.cjuega.interviews.bq.R;
 import com.cjuega.interviews.bq.utils.Utils;
 import com.cjuega.interviews.bq.widgets.BookAdapterListener;
-import com.cjuega.interviews.bq.widgets.DataRequester;
+import com.cjuega.interviews.bq.widgets.EndlessSortedListAdapter.DataRequester;
 import com.cjuega.interviews.bq.widgets.DoubleClickSupportedListView;
 import com.cjuega.interviews.bq.widgets.DoubleClickSupportedListView.OnItemDoubleClickListener;
 import com.cjuega.interviews.bq.widgets.DropboxFileAdapter;

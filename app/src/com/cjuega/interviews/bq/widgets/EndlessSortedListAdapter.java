@@ -25,6 +25,17 @@ public class EndlessSortedListAdapter<T> extends SortedListAdapter<T> {
 	private boolean mLoading;
 	private boolean mMoreDataToLoad;
 	
+	/**
+	 * 
+	 * @author cjuega
+	 *
+	 * Simple interface used by {@link EndlessSortedListAdapter EndlessSortedListAdapter} to request new data.
+	 *
+	 */
+	public interface DataRequester {
+		public void requestData();
+	}
+	
 	/* Constructors */
 	
 	public EndlessSortedListAdapter(Context context, int textViewResourceId,
