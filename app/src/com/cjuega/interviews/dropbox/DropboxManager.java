@@ -31,7 +31,7 @@ import com.dropbox.sync.android.DbxException.Unauthorized;
  *
  * This class deals with the Dropbox Sync API. It uses several classes that inherit 
  * of {@link AsyncTask AsyncTask} to offload work (like list and read files) to secondary threads. Whenever 
- * the work is done, a {@link SimpleCallback callback} processes the downloaded data. 
+ * the work is done, a {@link SimpleDropboxCallback callback} processes the downloaded data. 
  *  
  */
 public class DropboxManager {
@@ -135,14 +135,14 @@ public class DropboxManager {
 	/**
 	 * 
 	 * This method list all files (up to 1000 files which a Dropbox Sync API limit) of a given {@code extension} 
-	 * that are in the {@code DbxPath.ROOT} folder and all its subdirectories. See also {@link DropboxManager#getFiles(List, String, int, SimpleCallback) getFiles}
+	 * that are in the {@code DbxPath.ROOT} folder and all its subdirectories. See also {@link DropboxManager#getFiles(List, String, int, SimpleDropboxCallback) getFiles}
 	 * 
 	 * @param extension		File extension this method will look for. If it is null then all files are selected.
 	 * @param callback		The callback when the files are already listed.
 	 * @param pathListener	The listener to be added to the folder that the method explores.
 	 * @param listen		Boolean that indicates if the method must add the listener or not.
 	 */
-	public void getAllFiles(String extension, SimpleCallback callback, PathListener pathListener, boolean listen){
+	public void getAllFiles(String extension, SimpleDropboxCallback callback, PathListener pathListener, boolean listen){
 		ArrayList<DbxPath> pathToRoot = new ArrayList<DbxPath>(1);
 		pathToRoot.add(DbxPath.ROOT);
 		
@@ -166,7 +166,7 @@ public class DropboxManager {
 	 * @param pathListener	The listener to be added to the folder that the method explores.
 	 * @param listen		Boolean that indicates if the method must add the listener or not.
 	 */
-	public void getFiles(List<DbxPath> paths, String extension, int maxFiles, SimpleCallback callback, PathListener pathListener, boolean listen){
+	public void getFiles(List<DbxPath> paths, String extension, int maxFiles, SimpleDropboxCallback callback, PathListener pathListener, boolean listen){
 		if (!getDropboxFilesystem())
 			return;
 		
@@ -227,7 +227,7 @@ public class DropboxManager {
 	 * @param path		The Dropbox file path.
 	 * @param callback	The callback when the file is cached by the Dropbox Sync API.
 	 */
-	public void forceReadingFromPath (DbxPath path, SimpleCallback callback) {
+	public void forceReadingFromPath (DbxPath path, SimpleDropboxCallback callback) {
 		try {
 			DbxFileInfo fileInfo = mDbxFs.getFileInfo(path);
 			forceReading(fileInfo, callback);
@@ -248,7 +248,7 @@ public class DropboxManager {
 	 * @param file		The Dropbox file descriptor.
 	 * @param callback	The callback when the file is cached by the Dropbox Sync API.
 	 */
-	public void forceReading (DbxFileInfo fileInfo, SimpleCallback callback) {
+	public void forceReading (DbxFileInfo fileInfo, SimpleDropboxCallback callback) {
 		if (isSync(fileInfo)){
 			callback.call(fileInfo);
 		} else {
@@ -286,7 +286,7 @@ public class DropboxManager {
 	 * Simple interface to perform callbacks.
 	 * 
 	 */
-	public interface SimpleCallback {
+	public interface SimpleDropboxCallback {
 		public void call(Object object);
 	}
 	
@@ -301,11 +301,11 @@ public class DropboxManager {
 		private List<DbxPath> pathsToExplore;
 		private String fileExtension;
 		private int maxFiles;
-		private SimpleCallback mCallback;
+		private SimpleDropboxCallback mCallback;
 		private PathListener mPathListener;
 		private boolean mListen;
 
-		public DropboxListingTask (List<DbxPath> paths, String extension, int maxfiles, SimpleCallback callback, PathListener listener, boolean listen){
+		public DropboxListingTask (List<DbxPath> paths, String extension, int maxfiles, SimpleDropboxCallback callback, PathListener listener, boolean listen){
 			pathsToExplore = paths;
 			fileExtension = extension;
 			maxFiles = maxfiles;
@@ -392,9 +392,9 @@ public class DropboxManager {
 	 * 
 	 */
 	private class DropboxReadFileTask extends AsyncTask<DbxFileInfo, Void, DbxFileInfo> {
-		private SimpleCallback mCallback;
+		private SimpleDropboxCallback mCallback;
 		
-		public DropboxReadFileTask(SimpleCallback callback){
+		public DropboxReadFileTask(SimpleDropboxCallback callback){
 			mCallback = callback;
 		}
 

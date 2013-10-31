@@ -1,7 +1,7 @@
 package com.cjuega.interviews.bq.widgets;
 
 import com.cjuega.interviews.dropbox.DbxEPubInfo;
-import com.cjuega.interviews.dropbox.DropboxManager.SimpleCallback;
+import com.cjuega.interviews.dropbox.DropboxManager.SimpleDropboxCallback;
 import com.cjuega.interviews.epub.EPubHelper;
 import com.dropbox.sync.android.DbxFileInfo;
 
@@ -14,7 +14,7 @@ import com.dropbox.sync.android.DbxFileInfo;
  * not synchronized files. The goal is to get the book's titles, so the adapter can sort the list by them.
  *
  */
-public class SyncFileAdapterListener implements SimpleCallback {
+public class SyncFileAdapterListener implements SimpleDropboxCallback {
 	private DbxEPubInfo mFileInfo;
 	private DropboxFileAdapter mAdapter;
 	

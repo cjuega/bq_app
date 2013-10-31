@@ -50,7 +50,7 @@ import android.widget.Toast;
  *
  */
 public class FileListFragment extends ListFragmentCustomLayout implements ActionBar.OnNavigationListener,
-															  		 	  DropboxManager.SimpleCallback,
+															  		 	  DropboxManager.SimpleDropboxCallback,
 															  		 	  DataRequester, PathListener {
 	
 	private static final String FILE_EXTENSION = ".epub";

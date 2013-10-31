@@ -29,7 +29,7 @@ import android.widget.Toast;
  * the book's cover image. It uses {@link EPubHelper EPubHelper} to open the file.
  *
  */
-public class BookDetailsFragment extends Fragment implements DropboxManager.SimpleCallback, BookListener {
+public class BookDetailsFragment extends Fragment implements DropboxManager.SimpleDropboxCallback, BookListener {
 
 	public static final String FILENAME = "FILENAME";
 	
