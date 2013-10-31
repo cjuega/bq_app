@@ -340,12 +340,15 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 			
 			//mAdapter.addAll(files);
 			
-			// Probably faster than mAdapter.addAll(files) because elements are inserted in the correct position 
-			// and it does not require to sort again. And does not include existing elements!
-			for (DbxEPubInfo dbxEPubInfo : files) {
-				mAdapter.add(dbxEPubInfo);
+			if (!files.isEmpty()){
+				// Probably faster than mAdapter.addAll(files) because elements are inserted in the correct position 
+				// and it does not require to sort again. And does not include existing elements!
+				for (DbxEPubInfo dbxEPubInfo : files) {
+					mAdapter.add(dbxEPubInfo);
+				}
+			} else {
+				mAdapter.setNoMoreDataToLoad();
 			}
-			mAdapter.setNoMoreDataToLoad();
 			
 			for (DbxEPubInfo dbxEPubInfo : files) {
 				// If dbxEPubInfo is synchronized then we can get the book's title
