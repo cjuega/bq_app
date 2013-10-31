@@ -346,6 +346,9 @@ public class DropboxManager {
 					DbxPath path = paths.remove(0);
 					List<DbxFileInfo> files = mDbxFs.listFolder(path);
 					
+					if (mListen && mPathListener != null)
+						DropboxManager.getInstance().addListenerToPath(mPathListener, path, Mode.PATH_OR_CHILD);
+					
 					// for each file in a directory
 					for (DbxFileInfo fileInfo : files) {
 						// if it is a folder then we include it in the set of directories to explore
