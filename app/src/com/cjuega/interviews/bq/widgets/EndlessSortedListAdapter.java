@@ -127,8 +127,8 @@ public class EndlessSortedListAdapter<T> extends SortedListAdapter<T> {
 		mLoading = loading;
 	}
 	
-	public void setNoMoreDataToLoad() {
-		mMoreDataToLoad = false;
+	public void setMoreDataToLoad(boolean moreDataToLoad) {
+		mMoreDataToLoad = moreDataToLoad;
 	}
 
 	protected boolean shouldLoadMoreData(List<T> list, int position){

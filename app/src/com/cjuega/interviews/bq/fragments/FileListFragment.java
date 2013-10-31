@@ -347,7 +347,7 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 					mAdapter.add(dbxEPubInfo);
 				}
 			} else {
-				mAdapter.setNoMoreDataToLoad();
+				mAdapter.setMoreDataToLoad(false);
 			}
 			
 			for (DbxEPubInfo dbxEPubInfo : files) {
@@ -374,6 +374,7 @@ public class FileListFragment extends ListFragmentCustomLayout implements Action
 	
 	@Override
 	public void onPathChange(DbxFileSystem dbxFileSystem, DbxPath dbxPath, Mode mode) {
+		mAdapter.setMoreDataToLoad(true);
 		// We just need to add the folder in which the change happen to our paths to explore.
 		mPathsToExplore.add(dbxPath);
 		requestData();
